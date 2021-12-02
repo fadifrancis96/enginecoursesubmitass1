@@ -55,9 +55,45 @@ namespace glfw
       bool simplification_enable ;
       IGL_INLINE void Viewer::init_objs_simpelified();
       IGL_INLINE void simplify_mesh(int num_of_faces_to_delete);
-      IGL_INLINE bool collapse_edge();
+      IGL_INLINE bool collapse_edge(
+          const std::function<void(
+              std::vector<Eigen::Matrix<double, 4, 4>>& Qs,
+              const int,
+              const Eigen::MatrixXd&,
+              const Eigen::MatrixXi&,
+              const Eigen::MatrixXi&,
+              const Eigen::VectorXi&,
+              const Eigen::MatrixXi&,
+              const Eigen::MatrixXi&,
+              double&,
+              Eigen::RowVectorXd&)>& cost_and_placement,
+          std::vector<Eigen::Matrix<double, 4, 4>>& Qs,
+          Eigen::MatrixXd& V,
+          Eigen::MatrixXi& F,
+          Eigen::MatrixXi& E,
+          Eigen::VectorXi& EMAP,
+          Eigen::MatrixXi& EF,
+          Eigen::MatrixXi& EI,
+          std::set<std::pair<double, int> >& Q,
+          std::vector<std::set<std::pair<double, int> >::iterator >& Qit,
+          Eigen::MatrixXd& C);
+      IGL_INLINE bool Viewer::check_if_infinity(double first);
 
 
+      IGL_INLINE bool Viewer::collapse(
+          const int e,
+          const Eigen::RowVectorXd& p,
+          Eigen::MatrixXd& V,
+          Eigen::MatrixXi& F,
+          Eigen::MatrixXi& E,
+          Eigen::VectorXi& EMAP,
+          Eigen::MatrixXi& EF,
+          Eigen::MatrixXi& EI,
+          std::vector<Eigen::Matrix<double, 4, 4>>& Qs,
+          int& a_e1,
+          int& a_e2,
+          int& a_f1,
+          int& a_f2);
 
     virtual void Init(const std::string config);
 	virtual void Animate() {}

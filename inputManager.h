@@ -191,8 +191,9 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 			// Assignment 1 - task 8 
 			viewer->simplification_enable = true;
 			printf("simplefication is  %s \n", viewer->simplification_enable ? "on" : "off");
-			printf("send size is : %d" , std::ceil(0.05 * scn->data().Q->size()));
-			scn->simplify_mesh(1);
+			//printf("send size is : %d" , std::ceil(0.05 * scn->data().Q->size()));
+			//viewer->init_objs_simpelified();
+			viewer->simplify_mesh(std::ceil(0.05 * scn->data().Q->size()));
 		
 			break;
 	
