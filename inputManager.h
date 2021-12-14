@@ -175,25 +175,29 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 			rndr->TranslateCamera(Eigen::Vector3f(0, 0, -0.03f));
 			break;
 		case GLFW_KEY_UP:
-			rndr->TranslateCamera(Eigen::Vector3f(0, 0.01f,0));
+			scn->data().MyRotate(Eigen::Vector3d(1, 0, 0), -0.1);
 			break;
 		case GLFW_KEY_DOWN:
-			rndr->TranslateCamera(Eigen::Vector3f(0, -0.01f,0));
+			scn->data().MyRotate(Eigen::Vector3d(1, 0, 0), 0.1);
 
 			break;
 		case GLFW_KEY_LEFT:
-				rndr->TranslateCamera(Eigen::Vector3f(-0.01f, 0,0));
+			scn->data().MyRotate(Eigen::Vector3d(0, 1, 0), -0.1);
 			break;
 		case GLFW_KEY_RIGHT:
-			rndr->TranslateCamera(Eigen::Vector3f(0.01f, 0, 0));
+			scn->data().MyRotate(Eigen::Vector3d(0, 1, 0), 0.1);
 			break;
 		case ' ':
+			viewer->render_collison = !viewer->render_collison;
+
+			
 			// Assignment 1 - task 8 
-			viewer->simplification_enable = true;
-			printf("simplefication is  %s \n", viewer->simplification_enable ? "on" : "off");
-			//printf("send size is : %d" , std::ceil(0.05 * scn->data().Q->size()));
-			//viewer->init_objs_simpelified();
-			viewer->simplify_mesh(std::ceil(0.05 * scn->data().Q->size()));
+			//viewer->simplification_enable = true;
+			//printf("simplefication is  %s \n", viewer->simplification_enable ? "on" : "off");
+			////printf("send size is : %d" , std::ceil(0.05 * scn->data().Q->size()));
+			////viewer->init_objs_simpelified();
+			//viewer->simplify_mesh(std::ceil(0.05 * scn->data().Q->size()));
+	
 		
 			break;
 	

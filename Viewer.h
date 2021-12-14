@@ -25,6 +25,7 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <igl\AABB.h>
 
 #define IGL_MOD_SHIFT           0x0001
 #define IGL_MOD_CONTROL         0x0002
@@ -53,6 +54,7 @@ namespace glfw
 
 // ASSIGNMENT 1 
       bool simplification_enable ;
+      IGL_INLINE bool load_mesh_from_configuration(const std::string config , bool assignment2);
       IGL_INLINE void Viewer::init_objs_simpelified();
       IGL_INLINE void simplify_mesh(int num_of_faces_to_delete);
       IGL_INLINE bool collapse_edge(
@@ -94,6 +96,27 @@ namespace glfw
           int& a_e2,
           int& a_f1,
           int& a_f2);
+
+
+   
+   
+   // ASSIGNMENT 2 
+      std::vector< igl::AABB<Eigen::MatrixXd, 3>*> tree_roots;
+      std::vector< igl::AABB<Eigen::MatrixXd, 3>*> trees;
+      std::vector<Eigen::AlignedBox<double, 3>*> last_box;
+      IGL_INLINE void Viewer::draw_m_box(int index, Eigen::AlignedBox<double, 3>& m_box, Eigen::RowVector3d color);
+      IGL_INLINE void Viewer::start_collision_render();
+      IGL_INLINE bool Viewer::check_collision_occurence(igl::AABB<Eigen::MatrixXd, 3>* first, igl::AABB<Eigen::MatrixXd, 3>* second, Eigen::Vector3d A[], Eigen::Vector3d B[]);
+      IGL_INLINE bool Viewer::check_possible_seperate(Eigen::AlignedBox<double, 3>& first, Eigen::AlignedBox<double, 3>& second, Eigen::Vector3d A[], Eigen::Vector3d B[]);
+      IGL_INLINE void Viewer::stop_collision(void);
+
+
+    bool render_collison = false;
+
+
+
+
+
 
     virtual void Init(const std::string config);
 	virtual void Animate() {}
@@ -198,8 +221,7 @@ public:
     float scroll_position;
 
   public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        IGL_INLINE bool load_mesh_from_configuration(const std::string config);
+    
 };
 
 } // end namespace

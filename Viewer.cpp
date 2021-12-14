@@ -67,7 +67,7 @@ namespace glfw
   void Viewer::Init(const std::string config)
   {
       
-      load_mesh_from_configuration(config);
+    //  load_mesh_from_configuration(config);
 
   }
 
@@ -114,6 +114,61 @@ namespace glfw
   IGL_INLINE Viewer::~Viewer()
   {
   }
+
+  /* 
+  in order to perform a certian contraction we will need to calculate the cost of a contraction 
+  to define this cost we attemp to characterize the error at each vertex in the mesh . 
+
+  to do this : we associate a symmatric 4x4 matrix named Q with each vertex .
+
+  and we define the error at a vertix v to be 
+
+  v = = [vx vy vz 1]T  to be the quadratic form tirangle(v) = vTQv. 
+
+  meaning that the error is equal to vTQv. 
+
+  let symbol and name a given constraction (V1,v2) as v~ 
+
+  * now we mush derive a new matrix that we call Q~ which approximates the error at v~ 
+  * 
+  *  the rule is that Q~ = Q1 + Q2 - WHERE Q1 is the associted matrix for v1 and Q2 is the associated matrix of v2 
+  * 
+  * 
+  * in order to do the constraction we must find a position for v~  - the simple scheme would be to either choose 
+  * 1. v1 
+  * 2. v2 
+  * 3. v1+v2 \2  
+  * 
+  * 
+  * now it depends on which of these have the lowest value at triangelV 
+  * 
+  * 
+  *  meaning which of the following has the lowest value 
+  * 
+  * 1. v1T X  Q1 X v1
+  * 
+  * 2. v2T X  Q2 X v2 
+  * 
+  * 3. ((v1+v2)/2)T  x Q~ x (v1+v2)  
+  * 
+  * 
+  * now it is mentioned how to calculate the v~ 
+  * 
+  * 
+  * 
+  * 
+  * 
+  * 
+
+
+  
+  
+  
+  
+  
+  
+  */
+
   void calculate_cost(
       std::vector<Eigen::Matrix<double, 4, 4>>& Qs,
       const int e,
@@ -130,35 +185,67 @@ namespace glfw
       auto Q2 = Qs[E.row(e)[1]];
       Eigen::Matrix4d Q = Q1 + Q2;
       Q.row(3) = Eigen::Vector4d(0, 0, 0, 1);
+
+
       bool invertable = false;
       Eigen::Matrix<double, 4, 4> Qi;
       Q.computeInverseWithCheck(Qi, invertable, 0);
+
+
       Eigen::Matrix<double, 4, 1> a;
       if (invertable) {
+          // this is the v~ 
           a = Qi * Eigen::Matrix<double, 4, 1>(0, 0, 0, 1);
       }
       else {
+          // we need to choose the midpoint 
           a = (V.row(E.row(e)[0]) + V.row(E.row(e)[1])) / 2;
           a(3) = 1;
       }
+
+
       cost = a.transpose() * (Q1 + Q2) * a;
+      // new point s
       p = Eigen::RowVector3d(a(0), a(1), a(2));
   }
 
   //Assingment 1 task 6
   IGL_INLINE void Viewer::init_objs_simpelified() {
      
-      data().Q = new std::set<std::pair<double, int> >(); // priority Q contains the cost of every edge 
+      data().Q = new std::set<std::pair<double, int> >(); // priority Q contains the cost of edges <cost , number of edge > 
       data().EMAP = new Eigen::VectorXi();               // connects faces to edges 
-      data().E = new Eigen::MatrixXi();                   // this is the Edges -> edge is represented by <index of source vertex, index of destinations vertex>
-      data().EI = new Eigen::MatrixXi();                  //connects edge to vertex index in triangle (0 1 2)   
-      data().EF = new Eigen::MatrixXi();                    //connects edges to faces
+
+      /* 
+      E - matrix of edges
+      |1 , 3 |
+      |2 , 5 |
+      |3, 1  |
+      
+       source , destenation 
+      
+      
+      */
+
+      data().E = new Eigen::MatrixXi();                   // this is the Edges -> edge is represented by <index of source vertex, index of destinations vertex> - matrix []
+      
+      data().EI = new Eigen::MatrixXi();                  //connects edge to vertex index in triangle (0 1 2) 
+
+
+      data().EF = new Eigen::MatrixXi();                    //connects edges to faces this is a matrix that have [index of first face , index of second face ]
+    
+      
       data().C = new Eigen::MatrixXd();                 //position of the new vertex after collapsing the corresponding edge
-      data().V1 = new Eigen::MatrixXd(data().V);
-      data().F1 = new Eigen::MatrixXi(data().F);
+
+
+      data().V1 = new Eigen::MatrixXd(data().V);            // the new back up for v 
+
+      data().F1 = new Eigen::MatrixXi(data().F);            // the new backup for F 
+
       data().Qs = std::vector<Eigen::Matrix<double, 4, 4>>();
-      data().Qit = new std::vector<std::set<std::pair<double, int> >::iterator >();
+      data().Qit = new std::vector<std::set<std::pair<double, int> >::iterator >(); // saved iterator for every dege so that 
    
+
+      //this gets the EMAP EF E EI ready 
       edge_flaps(*data().F1, *data().E, *data().EMAP, *data().EF, *data().EI);
 
       data().Qit->resize(data().E->rows());
@@ -171,11 +258,12 @@ namespace glfw
      
 
 
-      auto VF = std::vector<std::vector<int> >(); // VF(v) is a vector of the face ids (index in data().F)
-      auto VFi = std::vector<std::vector<int> >();// VFi(v) is a vector of the index of v in the vector that represents f
+      auto VF = std::vector<std::vector<int> >(); 
+      auto VFi = std::vector<std::vector<int> >();
+
       vertex_triangle_adjacency(data().V, data().F, VF, VFi);
    
-
+      // this is for getting the Q ready 
       for (int v = 0; v < data().V.rows(); v++) {
 
        
@@ -185,7 +273,8 @@ namespace glfw
           for (int face : faces) {
               auto n = data().F_normals.row(face).normalized();
               float d = 0;
-              for (int j = 0; j < 3; j++) d += (-n[j] * data().V.row(v)[j]);
+              for (int j = 0; j < 3; j++) 
+              d += (-n[j] * data().V.row(v)[j]);
               Eigen::RowVector4d p(n[0], n[1], n[2], d);
               p = p.transpose();
               Q += p.transpose() * p;
@@ -217,10 +306,6 @@ namespace glfw
       printf("# of faces to delete %d \n", num_of_faces_to_delete);
       bool something_collapsed = false;
       int num_of_collapsed_edges = 0; 
-
-
-
-
       
       for (int i = 0; i < num_of_faces_to_delete; i++) {
          
@@ -234,12 +319,7 @@ namespace glfw
           {
               break;
 
-        
- 
-
           }
-          
-                
           something_collapsed = true;
           data().num_collapsed++;
 
@@ -327,12 +407,17 @@ namespace glfw
 
 
       if (collapsed) {
+          double cost_of_Edge = p.first;
 
+          printf("we collapsed the following edges : e -> %d , cost : %f     e1 -> %d  , cost: %f   e2 ->  , cost:    ", e, cost_of_Edge, e1, Qit[e1]->first);
           // Erase the two, other collapsed edges
           Q.erase(Qit[e1]);
           Qit[e1] = Q.end();
           Q.erase(Qit[e2]);
           Qit[e2] = Q.end();
+
+         
+
           // update local neighbors
           // loop over original face neighbors
           for (auto n : N)
@@ -343,15 +428,15 @@ namespace glfw
               {
                   for (int v = 0; v < 3; v++)
                   {
-                      // get edge id
+                   
                       const int ei = EMAP(v * F.rows() + n);
-                      // erase old entry
+                  
                       Q.erase(Qit[ei]);
-                      // compute cost and potential placement
+                   
                       double cost;
                       RowVectorXd place;
                       cost_and_placement(Qs, ei, V, F, E, EMAP, EF, EI, cost, place);
-                      // Replace in queue
+                  
                       Qit[ei] = Q.insert(std::pair<double, int>(cost, ei)).first;
                       C.row(ei) = place;
                   }
@@ -360,8 +445,7 @@ namespace glfw
       }
       else
       {
-          // reinsert with infinite weight (the provided cost function must **not**
-          // have given this un-collapsable edge inf cost already)
+    
           p.first = std::numeric_limits<double>::infinity();
           Qit[e] = Q.insert(p).first;
       }
@@ -759,11 +843,17 @@ namespace glfw
 
   // ASSIGNMENT 1 - TASK 4
 
-  IGL_INLINE bool Viewer::load_mesh_from_configuration(const std::string config) {
+  IGL_INLINE bool Viewer::load_mesh_from_configuration(const std::string config , bool assignment2) {
     
+      if (assignment2)
+          return true;
+          //init_obj_collision();
+     
+     
+      else {
           std::string mesh_path;
           std::fstream infile;
-          infile.open(config);
+          infile.open("configuration.txt");
           if (!infile) {
               std::cout << "Can't open file configuration.txt\n";
               return false;
@@ -772,13 +862,252 @@ namespace glfw
               while (getline(infile, mesh_path)) {
                   std::cout << "opening " << mesh_path << std::endl;
                   this->load_mesh_from_file(mesh_path);
-                  if (simplification_enable) this->init_objs_simpelified();
+                 // if (enable_simplefication) this->init_simplefication_objs();
               }
               infile.close();
               return true;
           }
-      
+      }
   }
+    
+
+
+  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////// ASSIGNMENT 2 //////////////////////////////////////////////////////////////////////
+
+
+
+
+  IGL_INLINE void Viewer::start_collision_render() {
+      this->data_list[1].MyTranslate(Eigen::Vector3d(-0.005, 0, 0), true);
+
+      Eigen::Matrix4f t1 = MakeTransScale() * data_list[0].MakeTransScale();
+      auto a1 = t1.row(0);
+      auto a2 = t1.row(1);
+      auto a3 = t1.row(2);
+      Eigen::Vector3d A[3] =
+      { Eigen::Vector3d(a1(0),a1(1),a1(2)),
+          Eigen::Vector3d(a2(0),a2(1),a2(2)),
+          Eigen::Vector3d(a3(0),a3(1),a3(2)) };
+
+       t1 = MakeTransScale() * data_list[1].MakeTransScale();
+       a1 = t1.row(0);
+       a2 = t1.row(1);
+       a3 = t1.row(2);
+      Eigen::Vector3d B[3] =
+      { Eigen::Vector3d(a1(0),a1(1),a1(2)),
+          Eigen::Vector3d(a2(0),a2(1),a2(2)),
+          Eigen::Vector3d(a3(0),a3(1),a3(2)) };
+
+
+      if (check_collision_occurence(this->trees.at(0), this->trees.at(1), A, B)) {
+          this->stop_collision();
+          this->trees.at(0) = this->tree_roots.at(0);
+          this->trees.at(1) = this->tree_roots.at(1);
+      }
+     
+  }
+
+  IGL_INLINE bool Viewer::check_collision_occurence(igl::AABB<Eigen::MatrixXd, 3>* first, igl::AABB<Eigen::MatrixXd, 3>* second, Eigen::Vector3d A[], Eigen::Vector3d B[]) {
+
+
+
+      bool collision = false;
+      igl::AABB<Eigen::MatrixXd, 3>* first_left_child = first->m_left;
+      igl::AABB<Eigen::MatrixXd, 3>* first_right_child = first->m_right;
+      igl::AABB<Eigen::MatrixXd, 3>* second_left_child = second->m_left;
+      igl::AABB<Eigen::MatrixXd, 3>* second_right_child = second->m_right;
+
+
+
+      if (first == nullptr || second == nullptr) return collision;
+
+  // if both parents are not leafs- may be at root level and may be deep inside the tree
+      if (!(first->is_leaf() || second->is_leaf())) {
+
+
+
+                    // if can seprate = true - this means that there is no collision 
+          if (!check_possible_seperate(first->m_box, second->m_box, A, B)) {
+               // getting here means that the roots / parents couldnt be seperated - there might be a collision we need to check the children 
+              // 
+
+              if (!collision && !check_possible_seperate(first_right_child->m_box, second_right_child->m_box, A, B)) {
+                  this->last_box.at(0) = &first_right_child->m_box;
+                  this->last_box.at(1) = &second_right_child->m_box;
+
+                  collision = check_collision_occurence(first_right_child, second_right_child, A, B);
+              }
+
+              if (!collision && !check_possible_seperate(first_right_child->m_box, second_left_child->m_box, A, B)) {
+                  this->last_box.at(0) = &first_right_child->m_box;
+                  this->last_box.at(1) = &second_left_child->m_box;
+                  collision = check_collision_occurence(first_right_child, second_left_child, A, B);
+              }
+              if (!collision && !check_possible_seperate(first_left_child->m_box, second_right_child->m_box, A, B)) {
+                  this->last_box.at(0) = &first_left_child->m_box;
+                  this->last_box.at(1) = &second_right_child->m_box;
+
+                  collision = check_collision_occurence(first_left_child, second_right_child, A, B);
+              }
+            
+              if (!collision && !check_possible_seperate(first_left_child->m_box, second_left_child->m_box, A, B)) {
+                  this->last_box.at(0) = &first_left_child->m_box;
+                  this->last_box.at(1) = &second_left_child->m_box;
+                
+                  collision = check_collision_occurence(first_left_child, second_left_child, A, B);
+              }
+            
+          }
+      }
+      else if (!first->is_leaf() && second->is_leaf()) {
+          if (!collision && !check_possible_seperate(first_left_child->m_box, second->m_box, A, B)) {
+              this->last_box.at(0) = &first_left_child->m_box;
+
+              collision = check_collision_occurence(first_left_child, second, A, B);
+          }
+          if (!collision && !check_possible_seperate(first_right_child->m_box, second->m_box, A, B)) {
+              this->last_box.at(0) = &first_right_child->m_box;
+
+              collision = check_collision_occurence(first_right_child, second, A, B);
+          }
+      }
+      
+      else if (first->is_leaf() && !second->is_leaf()) {
+          if (!collision && !check_possible_seperate(first->m_box, first_left_child->m_box, A, B)) {
+              this->last_box.at(1) = &first_left_child->m_box;
+       
+              collision = check_collision_occurence(first, first_left_child, A, B);
+          }
+          if (!collision && !check_possible_seperate(first->m_box, second_right_child->m_box, A, B)) {
+              this->last_box.at(1) = &second_right_child->m_box;
+           
+              collision = check_collision_occurence(first, second_right_child, A, B);
+          }
+      }
+     
+      else if (first->is_leaf() && second->is_leaf()) {
+          this->last_box.at(0) = &first->m_box;
+          this->last_box.at(1) = &second->m_box;
+          collision = !check_possible_seperate(first->m_box, second->m_box, A, B);
+      }
+      if (!collision) {
+          this->trees.at(0) = first;
+          this->trees.at(1) = second;
+      }
+      return collision;
+  }
+
+  IGL_INLINE bool Viewer::check_possible_seperate(Eigen::AlignedBox<double, 3>& first, Eigen::AlignedBox<double, 3>& second, Eigen::Vector3d A[], Eigen::Vector3d B[]) {
+
+      Eigen::Vector3d C1 = ((this->data_list[0].MakeTransScale()).cast<double>() * Eigen::Vector4d(first.center()(0), first.center()(1), first.center()(2), 1)).block<3, 1>(0, 0);
+      Eigen::Vector3d C2 = ((this->data_list[1].MakeTransScale()).cast<double>() * Eigen::Vector4d(second.center()(0), second.center()(1), second.center()(2), 1)).block<3, 1>(0, 0);
+      Eigen::Vector3d T = (C2 - C1);
+
+   
+      Eigen::Vector3d dims[2] = { first.sizes().cast<double>() / 2  , second.sizes().cast<double>() / 2 };
+      for (int dim = 0; dim < 3; dim++) {
+          double left_side = (dims[0](dim) + std::abs(dims[1](0) * (A[dim].dot(B[0]))) + std::abs(dims[1](1) * (A[dim].dot(B[1]))) + std::abs(dims[1](2) * (A[dim].dot(B[2]))));
+          double right_side = std::abs(T.dot(A[dim]));
+          if (right_side > left_side) return true;
+      }
+      for (int dim = 0; dim < 3; dim++) {
+          double left_side = (dims[1](dim) + std::abs(dims[0](0) * (A[0].dot(B[dim]))) + std::abs(dims[0](1) * (A[1].dot(B[dim]))) + std::abs(dims[0](2) * (A[2].dot(B[dim]))));
+          double right_side = std::abs(T.dot(B[dim]));
+          if (right_side > left_side)return true;
+      }
+
+      double left_side = std::abs(dims[0](1) * A[2].dot(B[0])) + std::abs(dims[0](2) * A[1].dot(B[0])) + std::abs(dims[1](1) * A[0].dot(B[2])) + std::abs(dims[1](2) * A[0].dot(B[1]));
+      double right_side = std::abs((T.dot(A[2])) * (A[1].dot(B[0])) - (T.dot(A[1])) * (A[2].dot(B[0])));
+      if (right_side > left_side) return true;
+
+      left_side = std::abs(dims[0](1) * A[2].dot(B[1])) + std::abs(dims[0](2) * A[1].dot(B[1])) + std::abs(dims[1](0) * A[0].dot(B[2])) + std::abs(dims[1](2) * A[0].dot(B[0]));
+      right_side = std::abs((T.dot(A[2])) * (A[1].dot(B[1])) - (T.dot(A[1])) * (A[2].dot(B[1])));
+      if (right_side > left_side)return true;
+
+      left_side = std::abs(dims[0](1) * A[2].dot(B[2])) + std::abs(dims[0](2) * A[1].dot(B[2])) + std::abs(dims[1](0) * A[0].dot(B[1])) + std::abs(dims[1](1) * A[0].dot(B[0]));
+      right_side = std::abs((T.dot(A[2])) * (A[1].dot(B[2])) - (T.dot(A[1])) * (A[2].dot(B[2])));
+      if (right_side > left_side) return true;
+
+      left_side = std::abs(dims[0](0) * A[2].dot(B[0])) + std::abs(dims[0](2) * A[0].dot(B[0])) + std::abs(dims[1](1) * A[1].dot(B[2])) + std::abs(dims[1](2) * A[1].dot(B[1]));
+      right_side = std::abs((T.dot(A[0])) * (A[2].dot(B[0])) - (T.dot(A[2])) * (A[0].dot(B[0])));
+      if (right_side > left_side) return true;
+   
+      left_side = std::abs(dims[0](0) * A[2].dot(B[1])) + std::abs(dims[0](2) * A[0].dot(B[1])) + std::abs(dims[1](0) * A[1].dot(B[2])) + std::abs(dims[1](2) * A[1].dot(B[0]));
+      right_side = std::abs((T.dot(A[0])) * (A[2].dot(B[1])) - (T.dot(A[2])) * (A[0].dot(B[1])));
+      if (right_side > left_side) return true;
+   
+      left_side = std::abs(dims[0](0) * A[2].dot(B[2])) + std::abs(dims[0](2) * A[0].dot(B[2])) + std::abs(dims[1](0) * A[1].dot(B[1])) + std::abs(dims[1](1) * A[1].dot(B[0]));
+      right_side = std::abs((T.dot(A[0])) * (A[2].dot(B[2])) - (T.dot(A[2])) * (A[0].dot(B[2])));
+      if (right_side > left_side)return true;
+
+      left_side = std::abs(dims[0](0) * A[1].dot(B[0])) + std::abs(dims[0](1) * A[0].dot(B[0])) + std::abs(dims[1](1) * A[2].dot(B[2])) + std::abs(dims[1](2) * A[2].dot(B[1]));
+      right_side = std::abs((T.dot(A[1])) * (A[0].dot(B[0])) - (T.dot(A[0])) * (A[1].dot(B[0])));
+      if (right_side > left_side) return true;
+
+      left_side = std::abs(dims[0](0) * A[1].dot(B[1])) + std::abs(dims[0](1) * A[0].dot(B[1])) + std::abs(dims[1](0) * A[2].dot(B[2])) + std::abs(dims[1](2) * A[2].dot(B[0]));
+      right_side = std::abs((T.dot(A[1])) * (A[0].dot(B[1])) - (T.dot(A[0])) * (A[1].dot(B[1])));
+      if (right_side > left_side)return true;
+    
+      left_side = std::abs(dims[0](0) * A[1].dot(B[2])) + std::abs(dims[0](1) * A[0].dot(B[2])) + std::abs(dims[1](0) * A[2].dot(B[1])) + std::abs(dims[1](1) * A[2].dot(B[0]));
+      right_side = std::abs((T.dot(A[1])) * (A[0].dot(B[2])) - (T.dot(A[0])) * (A[1].dot(B[2])));
+      if (right_side > left_side)return true;
+
+      return false;
+  }
+
+ 
+
+  IGL_INLINE void Viewer::stop_collision(void) {
+      Eigen::RowVector3d green_color(1, 1, 0);
+      
+      this->draw_m_box(0, *this->last_box.at(0), green_color);
+      this->draw_m_box(1, *this->last_box.at(1), green_color);
+      this->trees.at(0) = this->tree_roots.at(0);
+      this->trees.at(1) = this->tree_roots.at(1);
+
+      this->render_collison = false;
+    
+  }
+
+
+
+  IGL_INLINE void Viewer::draw_m_box(int index, Eigen::AlignedBox<double, 3>& m_box, Eigen::RowVector3d color) {
+      // Corners of the bounding 
+      Eigen::MatrixXd V_box(8, 3);
+      V_box << m_box.corner(m_box.BottomLeftCeil).transpose(),
+          m_box.corner(m_box.BottomLeftFloor).transpose(),
+          m_box.corner(m_box.BottomRightCeil).transpose(),
+          m_box.corner(m_box.BottomRightFloor).transpose(),
+          m_box.corner(m_box.TopLeftCeil).transpose(),
+          m_box.corner(m_box.TopLeftFloor).transpose(),
+          m_box.corner(m_box.TopRightCeil).transpose(),
+          m_box.corner(m_box.TopRightFloor).transpose();
+      // Edges of the bounding box
+      Eigen::MatrixXi E_box(12, 2);
+      E_box <<
+          0, 1,
+          1, 3,
+          2, 3,
+          2, 0,
+          4, 5,
+          5, 7,
+          6, 7,
+          6, 4,
+          0, 4,
+          1, 5,
+          2, 6,
+          7, 3;
+      // Plot the corners of the bounding box as points
+      this->data_list[index].add_points(V_box, color);
+      // Plot the edges of the bounding box
+      for (unsigned i = 0; i < E_box.rows(); ++i)
+          this->data_list[index].add_edges(V_box.row(E_box(i, 0)), V_box.row(E_box(i, 1)), color);
+  }
+
+
+
 
   Eigen::Matrix4d Viewer::CalcParentsTrans(int indx) 
   {

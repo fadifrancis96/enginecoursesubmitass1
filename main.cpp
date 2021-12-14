@@ -17,6 +17,7 @@ int main(int argc, char *argv[])
   
 
   // ASSIGNMENT 1 - TASK 4 
+  
   viewer.Init("configuration.txt");
   
   Init(*disp, menu);
