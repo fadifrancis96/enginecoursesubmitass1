@@ -23,6 +23,7 @@ public:
 
 	 
 	void RotateInSystem(Eigen::Vector3d rotAxis, double angle);
+	void MyRotate(Eigen::Vector3f rotAxis, float angle);
 	// !!!!!!!!!!!!
 
 	void MyRotate(Eigen::Vector3d rotAxis, double angle);
@@ -32,7 +33,9 @@ public:
 	Eigen::Matrix3d GetRotation() const{ return Tout.rotation().matrix(); }
 
 	virtual ~Movable() {}
-private:
+
 	Eigen::Affine3d Tout,Tin;
+
+private:
 };
 

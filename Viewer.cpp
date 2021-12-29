@@ -115,6 +115,32 @@ namespace igl
             {
             }
 
+
+
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //! 
+            //! 
+            //!                                           OUR CODE START HERE .
+            //! 
+            //! 
+
+
+
+            
+
+
+
+
+
+
+
+
+
+
+
+
             /*
             in order to perform a certian contraction we will need to calculate the cost of a contraction
             to define this cost we attemp to characterize the error at each vertex in the mesh .
@@ -1032,17 +1058,39 @@ namespace igl
 
 
                 Eigen::Vector3d dims[2] = { first.sizes().cast<double>() / 2  , second.sizes().cast<double>() / 2 };
+
+
+
                 for (int dim = 0; dim < 3; dim++) {
+
+
+                    // a0 +  b0|c00| + b1|c01| + b2|c02| 
+                    // a0 translate to dims[0][0] , b1 translate to dims[1][0] , c01 translate to A[0] transpose * B[1] ...
                     double left_side = (dims[0](dim) + std::abs(dims[1](0) * (A[dim].dot(B[0]))) + std::abs(dims[1](1) * (A[dim].dot(B[1]))) + std::abs(dims[1](2) * (A[dim].dot(B[2]))));
                     double right_side = std::abs(T.dot(A[dim]));
                     if (right_side > left_side) return true;
                 }
+
+
+                //         a0   +  b0|c00| + b1|c01| + b2|c02|     >< |A0*D| 
+                //         a1   +  b0|c10| + b1|c11| + b2|c12|     >< |A1*D| 
+                //         a2   +  b0|c20| + b1|c21| + b2|c22|     >< |A2*D| 
+
                 for (int dim = 0; dim < 3; dim++) {
+                     
+                    // R0 + R1 
                     double left_side = (dims[1](dim) + std::abs(dims[0](0) * (A[0].dot(B[dim]))) + std::abs(dims[0](1) * (A[1].dot(B[dim]))) + std::abs(dims[0](2) * (A[2].dot(B[dim]))));
+
+                    // R 
                     double right_side = std::abs(T.dot(B[dim]));
                     if (right_side > left_side)return true;
                 }
 
+
+
+                // a1|c20| + a2|c10| b1|c02| + b2|c01| 
+                // this will traslate to this 
+                // a1 -> dims[0][1] , c20 is like A[2] transpose * B[0]   ... and so on 
                 double left_side = std::abs(dims[0](1) * A[2].dot(B[0])) + std::abs(dims[0](2) * A[1].dot(B[0])) + std::abs(dims[1](1) * A[0].dot(B[2])) + std::abs(dims[1](2) * A[0].dot(B[1]));
                 double right_side = std::abs((T.dot(A[2])) * (A[1].dot(B[0])) - (T.dot(A[1])) * (A[2].dot(B[0])));
                 if (right_side > left_side) return true;
@@ -1133,6 +1181,221 @@ namespace igl
 
 
 
+            /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //////////////////////////////////////////// ASSIGNMENT 3 //////////////////////////////////////////////////////////////////////
+
+            IGL_INLINE void Viewer::init_ik_mesh() {
+                float mesh = 0;
+                std::string mesh_path;
+                std::string item_name;
+                std::ifstream nameFileout;
+                doubleVariable = 0;
+                nameFileout.open("configuration.txt");
+
+                if (!nameFileout.is_open())
+                {
+                    std::cout << "Can't open file " << "configuration" << std::endl;
+                }
+                else
+                {
+                    std::string cyl("ycylinder.obj");
+                    std::string sph("sphere.obj");
+                    Eigen::Matrix4f parent = this->MakeTransScale();
+                    while (getline(nameFileout, mesh_path))
+                    {
+                        if (mesh_path.substr(mesh_path.length() - sph.length(), sph.length()) == sph) {
+
+                            printf("this is sphere \n");
+                            this->load_mesh_from_file(mesh_path);
+                           
+                            this->data().MyTranslate(Eigen::Vector3d(5.0, 0.0, 0.0), false);
+                            this->sphere_index = this->selected_data_index;
+
+                            data().original_V = new Eigen::MatrixXd(this->data().V);
+                            data().original_F = new Eigen::MatrixXi(this->data().F);
+                            this->data().show_overlay_depth = false;
+                          
+                          
+                            Viewer::data().point_size = 2;
+                            Viewer::data().line_width = 2;
+
+
+                            Eigen::MatrixXd axis(1, 3);
+                                         axis << 0, 0, 0;
+                                        this->data().add_points(axis, Eigen::RowVector3d(0, 0, 1));
+
+
+
+                            parents.push_back(-1);
+                            data().add_points(Eigen::RowVector3d(0, 0, 0), Eigen::RowVector3d(0, 0, 1));
+                        }
+                        else {
+                            std::cout << "im here trying to open not sphere \n" << item_name << std::endl;
+
+                           
+
+                            //TODO
+                            for (int links = 0; links < this->link_number; links++) {
+                                                //--------------------------------------------------
+                                                //init link
+                                                this->load_mesh_from_file(mesh_path);
+                                                data().original_V = new Eigen::MatrixXd(this->data().V);
+                                                data().original_F = new Eigen::MatrixXi(this->data().F);
+                                                if (links > 0) this->data().MyTranslate(Eigen::Vector3d(0.0, 1.6, 0.0), true);
+                                                if (links == this->link_number - 1) this->last_link_index = this->root_link_index + links;
+                                                if (links == 0)this->root_link_index = this->selected_data_index;
+                                                this->data().show_overlay_depth = false;
+                                                this->data().point_size = 2;
+                                                this->data().line_width = 2;
+                                                this->data().Tout.translate(Eigen::Vector3d(0.0, -0.8, 0.0));
+                                                this->data().Tin.translate(-Eigen::Vector3d(0.0, -0.8, 0.0));
+                                                
+                                            //---------------------------------------------------
+                                                //add axis
+                                                Eigen::MatrixXd axis(7, 3);
+                                                axis << 0, -0.8, 0, 0, -0.8, 1.6, 0, -0.8, -1.6, 0, 0.8, 0, 0, -2.4, 0, -1.6, -0.8, 0, 1.6, -0.8, 0;
+                                                this->data().add_points(axis, Eigen::RowVector3d(0.0, 0.0, 1.0));
+                                                this->data().add_edges(axis.row(0), axis.row(1), Eigen::RowVector3d(0.0, 0.0, 1.0));
+                                                this->data().add_edges(axis.row(0), axis.row(2), Eigen::RowVector3d(0.0, 0.0, 1.0));
+                                                this->data().add_edges(axis.row(0), axis.row(3), Eigen::RowVector3d(0.0, 1.0, 0.0));
+                                                this->data().add_edges(axis.row(0), axis.row(4), Eigen::RowVector3d(0.0, 1.0, 0.0));
+                                                this->data().add_edges(axis.row(0), axis.row(5), Eigen::RowVector3d(1.0, 0.0, 0.0));
+                                                this->data().add_edges(axis.row(0), axis.row(6), Eigen::RowVector3d(1.0, 0.0, 0.0));
+                                           
+
+                                                parents.push_back(-1);
+                                                data().add_points(Eigen::RowVector3d(0, 0, 0), Eigen::RowVector3d(0, 0, 1));
+                            }
+                                        
+                                    
+
+
+
+                        }
+                
+
+
+                       
+
+
+                    }
+                    nameFileout.close();
+                }
+
+                MyTranslate(Eigen::Vector3d(0, 0, -1), true);
+
+                data().set_colors(Eigen::RowVector3d(0.9, 0.1, 0.1));
+            }
+
+            //    while (getline(infile, mesh_path)) {
+            //        std::cout << "opening " << mesh_path << std::endl;
+            //     /*if (mesh_path.substr(mesh_path.length() - sph.length(), sph.length()) == sph) {*/
+            //            this->load_mesh_from_file(mesh_path);/*
+            //            this->data().MyTranslate(Eigen::Vector3f(5, 0, 0), false);
+            //             this->sphere_index = this->selected_data_index;
+            //            this->data().show_overlay_depth = false;
+            //            this->data().point_size = 2;
+            //            this->data().line_width = 2;
+            //            Eigen::MatrixXd axis(1, 3);
+            //             axis << 0, 0, 0;
+            //            this->data().add_points(axis, Eigen::RowVector3d(0, 0, 1));*/
+            //        //}
+            //       //else if (mesh_path.substr(mesh_path.length() - cyl.length(), cyl.length()) == cyl) {
+
+            //         printf("its the cylndar \n");
+            //            //for (int links = 0; links < this->link_number; links++) {
+            //            //    //--------------------------------------------------
+            //            //    //init link
+            //            //    this->load_mesh_from_file(mesh_path);
+            //            //    if (links > 0) this->data().MyTranslate(Eigen::Vector3f(0, 1.6, 0), true);
+            //            //    if (links == this->link_number - 1) this->last_link_index = this->root_link_index + links;
+            //            //    if (links == 0)this->root_link_index = this->selected_data_index;
+            //            //    this->data().show_overlay_depth = false;
+            //            //    this->data().point_size = 2;
+            //            //    this->data().line_width = 2;
+            //            //    this->data().Tout.translate(Eigen::Vector3f(0, -0.8, 0));
+            //            //    this->data().Tin.translate(-Eigen::Vector3f(0, -0.8, 0));
+            //            //    
+            //            ////---------------------------------------------------
+            //            //    //add axis
+            //            //    Eigen::MatrixXd axis(7, 3);
+            //            //    axis << 0, -0.8, 0, 0, -0.8, 1.6, 0, -0.8, -1.6, 0, 0.8, 0, 0, -2.4, 0, -1.6, -0.8, 0, 1.6, -0.8, 0;
+            //            //    this->data().add_points(axis, Eigen::RowVector3d(0, 0, 1));
+            //            //    this->data().add_edges(axis.row(0), axis.row(1), Eigen::RowVector3d(0, 0, 1));
+            //            //    this->data().add_edges(axis.row(0), axis.row(2), Eigen::RowVector3d(0, 0, 1));
+            //            //    this->data().add_edges(axis.row(0), axis.row(3), Eigen::RowVector3d(0, 1, 0));
+            //            //    this->data().add_edges(axis.row(0), axis.row(4), Eigen::RowVector3d(0, 1, 0));
+            //            //    this->data().add_edges(axis.row(0), axis.row(5), Eigen::RowVector3d(1, 0, 0));
+            //            //    this->data().add_edges(axis.row(0), axis.row(6), Eigen::RowVector3d(1, 0, 0));
+            //            //}
+            //      //  }
+            //    }
+            //    infile.close();
+            //}
+
+
+
+
+
+            IGL_INLINE void Viewer::start_animate_ik() {
+                //this->data_list[this->sphere_index].MyTranslate(Eigen::Vector3f(-0.5, 0, 0), true);
+                //check if reachable
+                Eigen::Matrix4f m = this->MakeTransScale();
+                Eigen::Vector3f d = (this->data_list[this->sphere_index].MakeTransScale() * Eigen::Vector4f(static_cast < float>(0), static_cast < float>(0), static_cast < float>(0), static_cast < float>(1))).block<3, 1>(0, 0);
+                Eigen::Vector3f s = (this->data_list[root_link_index].MakeTransScale() * Eigen::Vector4f(static_cast < float>(0), static_cast <float> (- 0.8), static_cast < float>( 0), static_cast < float>(1))).block<3, 1>(0, 0);
+                Eigen::Vector3f tip = (
+                    this->get_parent_link_T(this->last_link_index)
+                    * this->data_list[this->last_link_index].MakeTransScale()
+                    * Eigen::Vector4f(0, 0.8, 0, 1)).block<3, 1>(0, 0).transpose();
+
+                std::cout << (d - tip).norm() << std::endl;
+
+                if (this->link_number * 1.6 < (d - s).norm()) {
+                    std::cout << "Can't reach!" << std::endl;
+                    this->animateIk = false;
+                    return;
+                }
+                if ((d - tip).norm() <= 0.1) {
+                    std::cout << "reached!" << std::endl;
+                    this->animateIk = false;
+                    return;
+                }
+                for (int i = this->root_link_index + this->link_number - 1; i > 0; i--) {
+                    Eigen::Vector3f D = d;
+                    Eigen::Vector3f R = (this->get_parent_link_T(i) * this->data_list[i].MakeTransScale() * Eigen::Vector4f(static_cast < float>(0), static_cast <float>( - 0.8), static_cast < float>( 0), static_cast < float>(1))).block<3, 1>(0, 0);
+                    Eigen::Vector3f E = (this->get_parent_link_T(last_link_index) * this->data_list[last_link_index].MakeTransScale() * Eigen::Vector4f(static_cast < float>(0), static_cast < float>(0.8), static_cast < float>(0), static_cast < float>(1))).block<3, 1>(0, 0);
+                    Eigen::Vector3f RD = D - R;
+                    Eigen::Vector3f RE = E - R;
+                    auto angle1 = acosf(RD.normalized().dot(RE.normalized())) - 0.001;
+                    Eigen::Vector3f axle_of_rotation = (this->get_parent_link_T(i).inverse()).block<3, 3>(0, 0) * RD.cross(RE);
+                    this->data_list[i].RotateInSystem(axle_of_rotation.cast<double>(), -angle1 * 0.1);
+                }
+                Eigen::Vector3f D = d;
+                Eigen::Vector3f R = (this->data_list[root_link_index].MakeTransScale() * Eigen::Vector4f(static_cast < float>(0), static_cast <float>( - 0.8), static_cast < float> (0), static_cast < float>(1))).block<3, 1>(0, 0);
+                Eigen::Vector3f E = (this->get_parent_link_T(last_link_index) * this->data_list[last_link_index].MakeTransScale() * Eigen::Vector4f(static_cast < float>(0), static_cast < float>(0.8), static_cast < float> (0), static_cast < float>(1))).block<3, 1>(0, 0);
+                Eigen::Vector3f RD = D - R;
+                Eigen::Vector3f RE = E - R;
+                auto angle1 = acosf(RD.normalized().dot(RE.normalized())) - 0.001;
+                Eigen::Vector3f axle_of_rotation = RD.cross(RE);
+                this->data_list[root_link_index].RotateInSystem(axle_of_rotation.cast<double>(), -angle1 * 0.1);
+
+            }
+
+            IGL_INLINE Eigen::Matrix4f Viewer::get_parent_link_T(int index) {
+                Eigen::Matrix4f m = Eigen::Matrix4f::Identity();
+                
+                    if (index != this->sphere_index) {
+                        for (int i = this->root_link_index; i < index; i++)
+                            m = m * this->data_list[i].MakeTransScale();
+                    }
+                
+              
+                return m;
+            }
+
+
+
 
             Eigen::Matrix4d Viewer::CalcParentsTrans(int indx)
             {
@@ -1141,13 +1404,13 @@ namespace igl
                 for (int i = indx; parents[i] >= 0; i = parents[i])
                 {
                     //std::cout << "parent matrix:\n" << scn->data_list[scn->parents[i]].MakeTrans() << std::endl;
-                    prevTrans = data_list[parents[i]].MakeTransd() * prevTrans;
+                   prevTrans = data_list[parents[i]].MakeTransd() * prevTrans;
                 }
 
-                return prevTrans;
+               return prevTrans;
             }
 
         } // end namespace
-    } // end namespace
+    }// end namespace
 
 }

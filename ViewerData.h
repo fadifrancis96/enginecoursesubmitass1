@@ -19,6 +19,7 @@
 #include <set>
 
 
+
 // Alec: This is a mesh class containing a variety of data types (normals,
 // overlays, material colors, etc.)
 //
@@ -175,6 +176,12 @@ public:
 
 
 
+  bool assignment3bool = false;
+  bool assignment2bool = false;
+
+
+
+
 
 
 
@@ -238,6 +245,15 @@ public:
   unsigned int show_texture;
   unsigned int show_faces;
   unsigned int show_lines;
+
+
+
+  // this is for assignment choosing 
+
+  unsigned int assignment3;
+  unsigned int assignment2;
+
+
   bool show_vertid; // shared across viewports for now
   bool show_faceid; // shared across viewports for now
 
@@ -255,6 +271,7 @@ public:
 
   // OpenGL representation of the mesh
   igl::opengl::MeshGL meshgl;
+
 
   // Update contents from a 'Data' instance
   IGL_INLINE void updateGL(
@@ -310,6 +327,7 @@ namespace igl
       SERIALIZE_MEMBER(line_color);
       SERIALIZE_MEMBER(shininess);
       SERIALIZE_MEMBER(id);
+
     }
     template<>
     inline void serialize(const igl::opengl::ViewerData& obj, std::vector<char>& buffer)

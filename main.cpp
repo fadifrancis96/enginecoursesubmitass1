@@ -12,15 +12,16 @@ int main(int argc, char *argv[])
   
   igl::opengl::glfw::imgui::ImGuiMenu* menu = new igl::opengl::glfw::imgui::ImGuiMenu();
 
- 
+  
 
   
 
   // ASSIGNMENT 1 - TASK 4 
   
   viewer.Init("configuration.txt");
-  
+  printf("done with init \n");
   Init(*disp, menu);
+  
   renderer.init(&viewer,2,menu);
   
   disp->SetRenderer(&renderer);

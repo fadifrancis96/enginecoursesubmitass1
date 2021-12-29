@@ -133,6 +133,14 @@ bool Display::launch_rendering(bool loop)
 			double duration = 1000000. * (igl::get_seconds() - tic);
 			const double min_duration = 1000000. / renderer->core().animation_max_fps;
 
+
+
+
+			if (renderer->GetScene()->animateIk)
+				//printf("want to animate ik \n");
+				renderer->GetScene()->start_animate_ik();
+
+
 			// i will add the animate collision 
 
 			if (renderer->GetScene()->render_collison)

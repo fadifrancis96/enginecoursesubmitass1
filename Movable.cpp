@@ -55,6 +55,10 @@ void Movable::RotateInSystem(Eigen::Vector3d rotAxis, double angle)
 
 }
 
+
+
+
+
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 //angle in radians
@@ -67,6 +71,7 @@ void Movable::MyRotate(const Eigen::Matrix3d& rot)
 {
 	Tout.rotate(rot);
 }
+
 
 void Movable::MyScale(Eigen::Vector3d amt)
 {

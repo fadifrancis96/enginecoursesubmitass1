@@ -51,6 +51,10 @@ namespace glfw
    // enum class MouseMode { None, Rotation, Zoom, Pan, Translation} mouse_mode;
 
 
+      // base for assignment 
+
+      IGL_INLINE void Viewer::assignmentsChoosing(int assignment);
+
 
 // ASSIGNMENT 1 
       bool simplification_enable ;
@@ -110,11 +114,24 @@ namespace glfw
       IGL_INLINE bool Viewer::check_possible_seperate(Eigen::AlignedBox<double, 3>& first, Eigen::AlignedBox<double, 3>& second, Eigen::Vector3d A[], Eigen::Vector3d B[]);
       IGL_INLINE void Viewer::stop_collision(void);
 
+      IGL_INLINE void Viewer::init_data();
 
     bool render_collison = false;
 
 
+    //assingment 3 
 
+    bool animateIk = false; 
+    IGL_INLINE void Viewer::start_animate_ik();
+    IGL_INLINE void Viewer::init_ik_mesh();
+    double doubleVariable;
+
+    IGL_INLINE Eigen::Matrix4f Viewer::get_parent_link_T(int index);
+    IGL_INLINE Eigen::Matrix4f Viewer::get_parent_link_Rot(int index);
+    int sphere_index;
+    int link_number = 4;
+    int root_link_index;
+    int last_link_index;
 
 
 

@@ -175,21 +175,27 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 			rndr->TranslateCamera(Eigen::Vector3f(0, 0, -0.03f));
 			break;
 		case GLFW_KEY_UP:
-			scn->data().MyRotate(Eigen::Vector3d(1, 0, 0), -0.1);
+			scn->data().RotateInSystem(Eigen::Vector3d(1, 0, 0), -0.1);
 			break;
 		case GLFW_KEY_DOWN:
-			scn->data().MyRotate(Eigen::Vector3d(1, 0, 0), 0.1);
+			scn->data().RotateInSystem(Eigen::Vector3d(1, 0, 0), 0.1);
 
 			break;
 		case GLFW_KEY_LEFT:
-			scn->data().MyRotate(Eigen::Vector3d(0, 1, 0), -0.1);
+			scn->data().RotateInSystem(Eigen::Vector3d(0, 1, 0), -0.1);
 			break;
 		case GLFW_KEY_RIGHT:
-			scn->data().MyRotate(Eigen::Vector3d(0, 1, 0), 0.1);
+			scn->data().RotateInSystem(Eigen::Vector3d(0, 1, 0), 0.1);
 			break;
 		case ' ':
-			viewer->render_collison = !viewer->render_collison;
+			if (scn->data().assignment3bool) {
+				viewer->animateIk = !viewer->animateIk;
+			
+			}
+			else if (scn->data().assignment2bool) {
 
+				viewer->render_collison = !viewer->render_collison;
+			}
 			
 			// Assignment 1 - task 8 
 			//viewer->simplification_enable = true;
