@@ -768,12 +768,44 @@ namespace igl
 
             IGL_INLINE void Viewer::open_dialog_load_mesh()
             {
-                std::string fname = igl::file_dialog_open();
+              /*  std::string fname = igl::file_dialog_open();
 
                 if (fname.length() == 0)
                     return;
 
-                this->load_mesh_from_file(fname.c_str());
+                this->load_mesh_from_file(fname.c_str());*/
+
+
+
+
+                int savedIndx = selected_data_index;
+                load_mesh_from_file("C:/Users/ASUS/EngineForAnimationCourse/tutorial/data/zcylinder.obj");
+                data().add_points(Eigen::RowVector3d(0, 0, 0), Eigen::RowVector3d(0, 0, 1));
+                data().show_overlay_depth = false;
+                data().show_overlay = true;
+                data().MyTranslate(Eigen::Vector3d(0, 0, (-1.6)), true);
+                data().set_visible(false, 1);
+                data().set_mesh(data().V, data().F);
+                data().set_visible(true, 2);
+                data().show_faces = 3;
+                data().set_face_based(true);
+
+                parents.push_back(data_list.size() - 2);
+                data().parentId = data_list.size() - 2;
+
+                data().SetCenter(Eigen::Vector3d(0, 0, 0.8));
+                data().show_texture = 3;
+                tipPos.push_back(Eigen::Vector4d(0, 0, 0, 1));
+                updateTipPos();
+                selected_data_index = savedIndx;
+                initLinkAxes();
+                linksNum++;
+                printf("current links num is %d\n", linksNum);
+
+
+
+
+
             }
 
             IGL_INLINE void Viewer::open_dialog_save_mesh()
@@ -1185,215 +1217,362 @@ namespace igl
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             //////////////////////////////////////////// ASSIGNMENT 3 //////////////////////////////////////////////////////////////////////
 
-            IGL_INLINE void Viewer::init_ik_mesh() {
-                float mesh = 0;
-                std::string mesh_path;
-                std::string item_name;
-                std::ifstream nameFileout;
-                doubleVariable = 0;
-                nameFileout.open("configuration.txt");
+            IGL_INLINE void Viewer::init_ik_mesh() 
 
-                if (!nameFileout.is_open())
                 {
-                    std::cout << "Can't open file " << "configuration" << std::endl;
-                }
-                else
-                {
-                    std::string cyl("ycylinder.obj");
-                    std::string sph("sphere.obj");
-                    Eigen::Matrix4f parent = this->MakeTransScale();
-                    while (getline(nameFileout, mesh_path))
-                    {
-                        if (mesh_path.substr(mesh_path.length() - sph.length(), sph.length()) == sph) {
 
-                            printf("this is sphere \n");
-                            this->load_mesh_from_file(mesh_path);
-                           
-                            this->data().MyTranslate(Eigen::Vector3d(5.0, 0.0, 0.0), false);
-                            this->sphere_index = this->selected_data_index;
+                // first of all i want to load the sphere and save the data of it 
+               
+                    std::string item_name;
+                    std::ifstream nameFileout;
+                    doubleVariable = 0;
+               
+                    linksNum = 3;
+                    	
+                    load_mesh_from_file("C:/Users/ASUS/EngineForAnimationCourse/tutorial/data/sphere.obj");
+                    parents.push_back(-1);
+                    data().add_points(Eigen::RowVector3d(0, 0, 0), Eigen::RowVector3d(0, 0, 1));
+                    data().show_overlay_depth = false;
+                    data().show_overlay = true;
+                   
 
-                            data().original_V = new Eigen::MatrixXd(this->data().V);
-                            data().original_F = new Eigen::MatrixXi(this->data().F);
-                            this->data().show_overlay_depth = false;
-                          
-                          
-                            Viewer::data().point_size = 2;
-                            Viewer::data().line_width = 2;
+                    data().MyTranslate(Eigen::Vector3d(5, 0, 0), true);
 
 
-                            Eigen::MatrixXd axis(1, 3);
-                                         axis << 0, 0, 0;
-                                        this->data().add_points(axis, Eigen::RowVector3d(0, 0, 1));
+                    data().set_visible(false, 1);
 
 
+                 
+                    data().set_face_based(true);
+                   // data().initEuler();
 
-                            parents.push_back(-1);
-                            data().add_points(Eigen::RowVector3d(0, 0, 0), Eigen::RowVector3d(0, 0, 1));
+                    // here i want to initialize the accpesees 
+                    initAxes();
+
+
+                    // before i start loading the cylinder , i want to push the initialized tip pos 
+                    tipPos.push_back(Eigen::Vector4d(0, 0, 0, 1));
+
+
+                    // here is a loop that loads 3 cylinders , for each one i want to update its center 
+                    // its parent cylindar and info 
+                    for (int i = 0; i < linksNum; i++) {
+                        load_mesh_from_file("C:/Users/ASUS/EngineForAnimationCourse/tutorial/data/zcylinder.obj");
+
+                        data().add_points(Eigen::RowVector3d(0, 0, 0), Eigen::RowVector3d(0, 0, 1));
+                        data().show_overlay_depth = false;
+                        data().show_overlay = true;
+
+                        if (i != 0) {
+                            data().MyTranslate(Eigen::Vector3d(0, 0, (-1.6)), true);
+                        }
+
+
+                        data().set_visible(false, 1);
+
+
+                        initLinkAxes();
+                        Eigen::Vector3d center = data().GetCenter();
+                   
+                        data().SetCenter(Eigen::Vector3d(0, 0, 0.8));
+                      
+                        if (i != 0) {
+                            parents.push_back(data_list.size() - 2);
+                            data().parentId = data_list.size() - 2;
                         }
                         else {
-                            std::cout << "im here trying to open not sphere \n" << item_name << std::endl;
+                            parents.push_back(-1);
+                            data().parentId = -1;
+                            Eigen::MatrixXd V_box(1, 3);
+                            V_box <<
+                                center.x(), center.y(), center.z();
 
-                           
-
-                            //TODO
-                            for (int links = 0; links < this->link_number; links++) {
-                                                //--------------------------------------------------
-                                                //init link
-                                                this->load_mesh_from_file(mesh_path);
-                                                data().original_V = new Eigen::MatrixXd(this->data().V);
-                                                data().original_F = new Eigen::MatrixXi(this->data().F);
-                                                if (links > 0) this->data().MyTranslate(Eigen::Vector3d(0.0, 1.6, 0.0), true);
-                                                if (links == this->link_number - 1) this->last_link_index = this->root_link_index + links;
-                                                if (links == 0)this->root_link_index = this->selected_data_index;
-                                                this->data().show_overlay_depth = false;
-                                                this->data().point_size = 2;
-                                                this->data().line_width = 2;
-                                                this->data().Tout.translate(Eigen::Vector3d(0.0, -0.8, 0.0));
-                                                this->data().Tin.translate(-Eigen::Vector3d(0.0, -0.8, 0.0));
-                                                
-                                            //---------------------------------------------------
-                                                //add axis
-                                                Eigen::MatrixXd axis(7, 3);
-                                                axis << 0, -0.8, 0, 0, -0.8, 1.6, 0, -0.8, -1.6, 0, 0.8, 0, 0, -2.4, 0, -1.6, -0.8, 0, 1.6, -0.8, 0;
-                                                this->data().add_points(axis, Eigen::RowVector3d(0.0, 0.0, 1.0));
-                                                this->data().add_edges(axis.row(0), axis.row(1), Eigen::RowVector3d(0.0, 0.0, 1.0));
-                                                this->data().add_edges(axis.row(0), axis.row(2), Eigen::RowVector3d(0.0, 0.0, 1.0));
-                                                this->data().add_edges(axis.row(0), axis.row(3), Eigen::RowVector3d(0.0, 1.0, 0.0));
-                                                this->data().add_edges(axis.row(0), axis.row(4), Eigen::RowVector3d(0.0, 1.0, 0.0));
-                                                this->data().add_edges(axis.row(0), axis.row(5), Eigen::RowVector3d(1.0, 0.0, 0.0));
-                                                this->data().add_edges(axis.row(0), axis.row(6), Eigen::RowVector3d(1.0, 0.0, 0.0));
-                                           
-
-                                                parents.push_back(-1);
-                                                data().add_points(Eigen::RowVector3d(0, 0, 0), Eigen::RowVector3d(0, 0, 1));
-                            }
-                                        
-                                    
-
-
-
+                            data().add_points(V_box, Eigen::RowVector3d(1, 0, 0));
                         }
-                
+                        
 
-
-                       
-
-
+                        tipPos.push_back(Eigen::Vector4d(0, 0, (i + 1) * 1.6, 1));
                     }
-                    nameFileout.close();
+                   
+                    updateDestPos();
+                    updateTipPos();
+
                 }
 
-                MyTranslate(Eigen::Vector3d(0, 0, -1), true);
 
-                data().set_colors(Eigen::RowVector3d(0.9, 0.1, 0.1));
-            }
+void Viewer::CCD() {
+    double delta = 0.1;
+    Eigen::Vector4d tipToDest = tipPos[linksNum] - destPos;
+    Eigen::Vector4d baseToTip;
+    Eigen::Vector4d baseToDest;
+    Eigen::Vector4d rotationVector;
+    double angle, A;
+    printf("LINKS NUM IS : %d \n", linksNum);
 
-            //    while (getline(infile, mesh_path)) {
-            //        std::cout << "opening " << mesh_path << std::endl;
-            //     /*if (mesh_path.substr(mesh_path.length() - sph.length(), sph.length()) == sph) {*/
-            //            this->load_mesh_from_file(mesh_path);/*
-            //            this->data().MyTranslate(Eigen::Vector3f(5, 0, 0), false);
-            //             this->sphere_index = this->selected_data_index;
-            //            this->data().show_overlay_depth = false;
-            //            this->data().point_size = 2;
-            //            this->data().line_width = 2;
-            //            Eigen::MatrixXd axis(1, 3);
-            //             axis << 0, 0, 0;
-            //            this->data().add_points(axis, Eigen::RowVector3d(0, 0, 1));*/
-            //        //}
-            //       //else if (mesh_path.substr(mesh_path.length() - cyl.length(), cyl.length()) == cyl) {
-
-            //         printf("its the cylndar \n");
-            //            //for (int links = 0; links < this->link_number; links++) {
-            //            //    //--------------------------------------------------
-            //            //    //init link
-            //            //    this->load_mesh_from_file(mesh_path);
-            //            //    if (links > 0) this->data().MyTranslate(Eigen::Vector3f(0, 1.6, 0), true);
-            //            //    if (links == this->link_number - 1) this->last_link_index = this->root_link_index + links;
-            //            //    if (links == 0)this->root_link_index = this->selected_data_index;
-            //            //    this->data().show_overlay_depth = false;
-            //            //    this->data().point_size = 2;
-            //            //    this->data().line_width = 2;
-            //            //    this->data().Tout.translate(Eigen::Vector3f(0, -0.8, 0));
-            //            //    this->data().Tin.translate(-Eigen::Vector3f(0, -0.8, 0));
-            //            //    
-            //            ////---------------------------------------------------
-            //            //    //add axis
-            //            //    Eigen::MatrixXd axis(7, 3);
-            //            //    axis << 0, -0.8, 0, 0, -0.8, 1.6, 0, -0.8, -1.6, 0, 0.8, 0, 0, -2.4, 0, -1.6, -0.8, 0, 1.6, -0.8, 0;
-            //            //    this->data().add_points(axis, Eigen::RowVector3d(0, 0, 1));
-            //            //    this->data().add_edges(axis.row(0), axis.row(1), Eigen::RowVector3d(0, 0, 1));
-            //            //    this->data().add_edges(axis.row(0), axis.row(2), Eigen::RowVector3d(0, 0, 1));
-            //            //    this->data().add_edges(axis.row(0), axis.row(3), Eigen::RowVector3d(0, 1, 0));
-            //            //    this->data().add_edges(axis.row(0), axis.row(4), Eigen::RowVector3d(0, 1, 0));
-            //            //    this->data().add_edges(axis.row(0), axis.row(5), Eigen::RowVector3d(1, 0, 0));
-            //            //    this->data().add_edges(axis.row(0), axis.row(6), Eigen::RowVector3d(1, 0, 0));
-            //            //}
-            //      //  }
-            //    }
-            //    infile.close();
-            //}
+    printf("links * 1.6 is : %i\n", linksNum * 1.6);
 
 
+    baseToDest = tipPos[0] - destPos; //will check if possible to reach destination
+
+    printf("baseToDest NUM IS : %d \n", baseToDest.norm());
+    int x = linksNum * 1.6;
+    int y = baseToDest.norm();
+    std::cout << "The Value of 'x' is \n" << x;
+    std::cout << "The Value of 'y' is \n" << y;
+    if (y > x) {
+        isActive = false;
+        this->animateIk = false;
+        printf("can't reach destination position \n");
+        return;
+    }
+
+    for (int i = linksNum; i > 0; i--)
+    {
+        baseToDest = destPos - tipPos[i - 1];
+        baseToTip = tipPos[linksNum] - tipPos[i - 1];
+        A = baseToTip.normalized().dot(baseToDest.normalized());
+        if (A > 1) {
+            A = 1;
+        }
+        if (A < -1) {
+            A = -1;
+        }
+        angle = acos(A);
+        rotationVector = baseToTip.cross3(baseToDest);
+        data_list[i].MyRotate(((CalcParentsTrans(i) * data_list[i].MakeTransd()).inverse() * rotationVector).head(3), angle / 10);
+        updateTipPos();
+    }
+
+    tipToDest = tipPos[linksNum] - destPos;
+    if (tipToDest.norm() < delta) {
+        this->animateIk = false;
+        isActive = false;
+    }
+
+}
+
+
+/* 
+
+
+the things we need for FABRIK TO WORK 
+
+we need the 
+1. lengths 
+2. start position 
+3. goal 
+4. previous points
 
 
 
-            IGL_INLINE void Viewer::start_animate_ik() {
-                //this->data_list[this->sphere_index].MyTranslate(Eigen::Vector3f(-0.5, 0, 0), true);
-                //check if reachable
-                Eigen::Matrix4f m = this->MakeTransScale();
-                Eigen::Vector3f d = (this->data_list[this->sphere_index].MakeTransScale() * Eigen::Vector4f(static_cast < float>(0), static_cast < float>(0), static_cast < float>(0), static_cast < float>(1))).block<3, 1>(0, 0);
-                Eigen::Vector3f s = (this->data_list[root_link_index].MakeTransScale() * Eigen::Vector4f(static_cast < float>(0), static_cast <float> (- 0.8), static_cast < float>( 0), static_cast < float>(1))).block<3, 1>(0, 0);
-                Eigen::Vector3f tip = (
-                    this->get_parent_link_T(this->last_link_index)
-                    * this->data_list[this->last_link_index].MakeTransScale()
-                    * Eigen::Vector4f(0, 0.8, 0, 1)).block<3, 1>(0, 0).transpose();
 
-                std::cout << (d - tip).norm() << std::endl;
+*/
 
-                if (this->link_number * 1.6 < (d - s).norm()) {
-                    std::cout << "Can't reach!" << std::endl;
-                    this->animateIk = false;
-                    return;
-                }
-                if ((d - tip).norm() <= 0.1) {
-                    std::cout << "reached!" << std::endl;
-                    this->animateIk = false;
-                    return;
-                }
-                for (int i = this->root_link_index + this->link_number - 1; i > 0; i--) {
-                    Eigen::Vector3f D = d;
-                    Eigen::Vector3f R = (this->get_parent_link_T(i) * this->data_list[i].MakeTransScale() * Eigen::Vector4f(static_cast < float>(0), static_cast <float>( - 0.8), static_cast < float>( 0), static_cast < float>(1))).block<3, 1>(0, 0);
-                    Eigen::Vector3f E = (this->get_parent_link_T(last_link_index) * this->data_list[last_link_index].MakeTransScale() * Eigen::Vector4f(static_cast < float>(0), static_cast < float>(0.8), static_cast < float>(0), static_cast < float>(1))).block<3, 1>(0, 0);
-                    Eigen::Vector3f RD = D - R;
-                    Eigen::Vector3f RE = E - R;
-                    auto angle1 = acosf(RD.normalized().dot(RE.normalized())) - 0.001;
-                    Eigen::Vector3f axle_of_rotation = (this->get_parent_link_T(i).inverse()).block<3, 3>(0, 0) * RD.cross(RE);
-                    this->data_list[i].RotateInSystem(axle_of_rotation.cast<double>(), -angle1 * 0.1);
-                }
-                Eigen::Vector3f D = d;
-                Eigen::Vector3f R = (this->data_list[root_link_index].MakeTransScale() * Eigen::Vector4f(static_cast < float>(0), static_cast <float>( - 0.8), static_cast < float> (0), static_cast < float>(1))).block<3, 1>(0, 0);
-                Eigen::Vector3f E = (this->get_parent_link_T(last_link_index) * this->data_list[last_link_index].MakeTransScale() * Eigen::Vector4f(static_cast < float>(0), static_cast < float>(0.8), static_cast < float> (0), static_cast < float>(1))).block<3, 1>(0, 0);
-                Eigen::Vector3f RD = D - R;
-                Eigen::Vector3f RE = E - R;
-                auto angle1 = acosf(RD.normalized().dot(RE.normalized())) - 0.001;
-                Eigen::Vector3f axle_of_rotation = RD.cross(RE);
-                this->data_list[root_link_index].RotateInSystem(axle_of_rotation.cast<double>(), -angle1 * 0.1);
 
-            }
 
-            IGL_INLINE Eigen::Matrix4f Viewer::get_parent_link_T(int index) {
-                Eigen::Matrix4f m = Eigen::Matrix4f::Identity();
-                
-                    if (index != this->sphere_index) {
-                        for (int i = this->root_link_index; i < index; i++)
-                            m = m * this->data_list[i].MakeTransScale();
-                    }
-                
-              
-                return m;
-            }
+void Viewer::Fabrik() {
+    double delta = 0.1;
+    Eigen::Vector4d tipToDest = tipPos[linksNum] - destPos;
+    Eigen::Vector4d baseToTip;
+    Eigen::Vector4d baseToDest;
+    Eigen::Vector4d rotationVector;
+    double R, lambda;
+    std::vector<Eigen::Vector4d> ftipPos(tipPos);
 
+    baseToDest = tipPos[0] - destPos; //will check if possible to reach destination
+    if (baseToDest.norm() > linksNum * 1.6) {
+        animateIk = false;
+        isActive = false;
+        printf("can't reach destination position\n");
+        return;
+    }
+
+    ftipPos[linksNum] = destPos;
+    // backward reachings
+    for (int i = linksNum - 1; i >= 0; i--)
+    {
+        R = (ftipPos[i + 1] - ftipPos[i]).norm();
+        lambda = 1.6 / R;
+        ftipPos[i] = (1 - lambda) * ftipPos[i + 1] + lambda * ftipPos[i];
+    }
+
+    ftipPos[0] = tipPos[0];
+    //forward reaching
+    for (int i = 0; i < linksNum; i++)
+    {
+        R = (ftipPos[i + 1] - ftipPos[i]).norm();
+        lambda = 1.6 / R;
+        ftipPos[i + 1] = (1 - lambda) * ftipPos[i] + lambda * ftipPos[i + 1];
+    }
+
+    updateLinksToTips(ftipPos);
+
+    tipToDest = tipPos[linksNum] - destPos;
+
+
+
+
+    if (tipToDest.norm() < delta) {
+        // here i fix the rotation around the axis , using euler angels 
+        fix_axis_rotation();
+        animateIk = false;
+        isActive = false;
+    }
+}
+void Viewer::updateLinksToTips(std::vector<Eigen::Vector4d> newPos) {
+    double angle, A;
+    Eigen::Vector4d currVec;
+    Eigen::Vector4d newVec;
+    Eigen::Vector4d rotationVector;
+    for (int i = 0; i < linksNum; i++)
+    {
+        currVec = tipPos[i + 1] - tipPos[i];
+        newVec = newPos[i + 1] - newPos[i];
+        A = currVec.normalized().dot(newVec.normalized());
+        if (A > 1) {
+            A = 1;
+        }
+        if (A < -1) {
+            A = -1;
+        }
+        angle = acos(A);
+        rotationVector = currVec.cross3(newVec);
+        data_list[i + 1].MyRotate(((CalcParentsTrans(i + 1) * data_list[i + 1].MakeTransd()).inverse() * rotationVector).head(3), angle / 10);
+        updateTipPos();
+    }
+
+}
+
+
+
+void Viewer::updateDestPos() {
+    //destPos = (Eigen::Vector4d(data_list[0].GetCenter()(0), data_list[0].GetCenter()(1), data_list[0].GetCenter()(2), 1));
+    destPos = (data_list[0].MakeTransd() * Eigen::Vector4d(0, 0, 0, 1));
+  
+}
+void Viewer::initAxes() {
+
+    Eigen::MatrixXd V_box(6, 3);
+    V_box <<
+        1.6, 0, 0,
+        -1.6, 0, 0,
+        0, 1.6, 0,
+        0, -1.6, 0,
+        0, 0, 1.6,
+        0, 0, -1.6;
+
+    data().add_points(V_box, Eigen::RowVector3d(1, 0, 0));
+
+
+    Eigen::MatrixXi E_box(3, 2);
+    E_box <<
+        0, 1,
+        2, 3,
+        4, 5;
+
+    for (unsigned i = 0; i < E_box.rows(); ++i)
+        data().add_edges
+        (
+            V_box.row(E_box(i, 0)),
+            V_box.row(E_box(i, 1)),
+            Eigen::RowVector3d(1, 0, 0)
+        );
+}
+
+void Viewer::fix_axis_rotation() {
+
+    Eigen::Vector3d zAx(0, 0, 1);
+    double adegrad;
+    for (int i = 1; i < data_list.size(); i++) {
+        Eigen::Matrix3d rotation_mat = data_list[i].GetRotation();
+        Eigen::Vector3d Eulerangl = rotation_mat.eulerAngles(2, 0, 2);// take the current rotation angle zxz(2,0,2)
+        adegrad = Eulerangl[2];
+        data_list[i].MyRotate(zAx, -adegrad);// rotate around z ax, with the  minus the degree, that we rotate before, to fix axis
+        //now after zxz we rotate -z so now its zx....z(-z)=zx
+        // so for next link we rotate with z angle to return zxz
+        if (i != data_list.size() - 1) { // if we are last link with no children link, so we finish , no rotate, to prevent error with no exist data
+            data_list[i + 1].RotateInSystem(zAx, adegrad);
+        }
+    }
+
+}
+
+void Viewer::initLinkAxes() {
+
+    Eigen::MatrixXd V_box(6, 3);
+    V_box <<
+        0.8, 0, -0.8,
+        -0.8, 0, -0.8,
+        0, 0.8, -0.8,
+        0, -0.8, -0.8,
+        0, 0, -0.8,
+        0, 0, -2.4;
+
+    data().add_points(V_box, Eigen::RowVector3d(0, 0, 1));
+
+
+    Eigen::MatrixXi E_box(3, 2);
+    E_box <<
+        0, 1,
+        2, 3,
+        4, 5;
+
+    for (unsigned i = 0; i < E_box.rows(); ++i)
+        data().add_edges
+        (
+            V_box.row(E_box(i, 0)),
+            V_box.row(E_box(i, 1)),
+            Eigen::RowVector3d(0, 0, 1)
+        );
+}
+// i want to update the tip position of the cylnaders 
+// 
+void Viewer::updateTipPos() {
+    Eigen::Vector3d c = data_list[1].GetCenter();
+    Eigen::Vector4d center(c.x(), c.y(), c.z(), 1);
+    Eigen::Matrix3d rot = Eigen::Matrix3d().Identity();
+
+
+    Eigen::Vector4d O = data_list[1].MakeTransd() * center - Eigen::Vector4d(0, 0, 0.8, 0);
+    tipPos[0] = O;
+    for (int i = 1; i < data_list.size(); i++) {
+        rot = rot * data_list[i].GetRotation();
+
+        Eigen::Vector3d tmp = (rot * Eigen::Vector3d(0, 0, -1.6));
+        O = O + Eigen::Vector4d(tmp(0), tmp(1), tmp(2), 0);
+        tipPos[i] = O;
+
+    }
+}
+
+           
+
+void Viewer::printRotation() {
+    Eigen::Matrix3d rotMat;
+    if (isPicked || selected_data_index == 0) {
+        rotMat = GetRotation();
+    }
+    else {
+        printf("LINK NUM  %d rotation matrix:\n", selected_data_index);
+        rotMat = data().GetRotation();
+    }
+    for (int i = 0; i < 3; i++) {
+        printf("(%f\t%f\t%f)\n", rotMat(i, 0), rotMat(i, 1), rotMat(i, 2));
+    }
+}
+void Viewer::printTip() {
+    for (size_t i = 0; i < tipPos.size(); i++)
+    {
+        if (i != 0) {
+            printf("tip position %d: (%f,%f,%f) \n", i, tipPos[i](0), tipPos[i](1), tipPos[i](2));
+        }
+        else {
+            printf("base position: (%f,%f,%f) \n", tipPos[i](0), tipPos[i](1), tipPos[i](2));
+        }
+    }
+}
+
+           
 
 
 
