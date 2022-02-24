@@ -9,6 +9,7 @@
 #include "igl/igl_inline.h"
 #include <igl/get_seconds.h>
 #include "igl/opengl/glfw/renderer.h"
+#include <tutorial/sandBox/Game.h>
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -134,11 +135,12 @@ bool Display::launch_rendering(bool loop)
 			const double min_duration = 1000000. / renderer->core().animation_max_fps;
 
 
-
+			if (renderer->GetScene()->running_game && (!renderer->GetScene()->pause_game))
+				((Game*)(renderer->GetScene()->game))->loop();;
 
 			if (renderer->GetScene()->animateIk)
 				//printf("want to animate ik \n");
-				renderer->GetScene()->start_animate_ik();
+				renderer->GetScene()->Fabrik();
 
 
 			// i will add the animate collision 

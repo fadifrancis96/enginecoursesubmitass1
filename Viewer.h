@@ -17,7 +17,7 @@
 
 #include "../ViewerData.h"
 #include "ViewerPlugin.h"
-
+#include "../ViewerCore.h"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -33,7 +33,7 @@
 #define IGL_MOD_SUPER           0x0008
 
 
-
+struct GLFWwindow;
 
 
 namespace igl
@@ -122,12 +122,13 @@ namespace glfw
     //assingment 3 
 
     bool animateIk = false; 
-    IGL_INLINE void Viewer::start_animate_ik();
+    //IGL_INLINE void Viewer::start_animate_ik();
     IGL_INLINE void Viewer::init_ik_mesh();
     double doubleVariable;
 
     IGL_INLINE Eigen::Matrix4f Viewer::get_parent_link_T(int index);
     IGL_INLINE Eigen::Matrix4f Viewer::get_parent_link_Rot(int index);
+
     int sphere_index;
     int link_number = 4;
     int root_link_index;
@@ -135,12 +136,121 @@ namespace glfw
 
 
 
+
+    void Viewer::initAxes();
+    void Viewer::initLinkAxes();
+    void Viewer::updateTipPos();
+    void Viewer::updateDestPos();
+    void Viewer::CCD();
+    void Viewer::Fabrik();
+    void Viewer::updateLinksToTips(std::vector<Eigen::Vector4d> newPos);
+    std::vector<Eigen::Vector4d> tipPos;
+    std::vector<Eigen::Vector4f> tipPos1;
+    int linksNum;
+    void Viewer::fix_axis_rotation();
+    void Viewer::printRotation();
+    void Viewer::printTip();
+    Eigen::Vector4d destPos;
+ 
+
     virtual void Init(const std::string config);
 	virtual void Animate() {}
 	virtual void WhenTranslate() {}
 	virtual Eigen::Vector3d GetCameraPosition() { return Eigen::Vector3d(0, 0, 0); }
 	virtual Eigen::Vector3d GetCameraForward() { return Eigen::Vector3d(0, 0, -1); }
 	virtual Eigen::Vector3d GetCameraUp() { return Eigen::Vector3d(0, 1, 0); }
+    IGL_INLINE Eigen::Matrix4f Viewer::get_parent_link_T();
+    IGL_INLINE void Viewer::init_plugins();
+    bool picked;
+    
+     GLFWwindow* window;
+
+    // final project 
+     bool Viewer::check_index_collision(int i);
+     std::string configFileLevel;
+    
+     bool level1 ;
+     bool level2 ;
+     typedef
+         std::vector<Eigen::Quaterniond, Eigen::aligned_allocator<Eigen::Quaterniond> >
+         RotationList;
+     Eigen::MatrixXd V, W, C, U, M;
+     Eigen::Vector3d destination_position;
+     std::vector<Eigen::Vector3d>chain;
+     int scale;
+     int Num_Of_Joints;
+     std::vector<Eigen::Vector3d>skelton;
+     std::vector<Movable> Joints;
+     std::vector<Eigen::Vector3d> vT;
+     std::vector<int> parentsJoints;
+     RotationList vQ;
+     bool up;
+     bool down;
+     bool right;
+     bool left;
+     bool rotDir;
+     bool skinning;
+
+     bool levelWindow;
+     bool finishLevel;
+     int score;
+     int level;
+
+     bool snakeEye;
+
+
+     void CalcNextPosition();
+
+     bool Is_Collide(Eigen::AlignedBox<double, 3>& A_box, int indexA, Eigen::AlignedBox<double, 3>& B_box, int indexB);
+
+     bool Check_Collision(igl::AABB<Eigen::MatrixXd, 3>& A, int indexA, igl::AABB<Eigen::MatrixXd, 3>& B, int indexB);
+
+     bool Check_Collision();
+
+     IGL_INLINE bool check_snake_collision();
+
+     void Calculate_Weights();
+
+     Eigen::VectorXd creatWiVector(Eigen::Vector4d temp);
+
+     void Initialize_Tree(int index);
+
+     IGL_INLINE void Viewer::init_final_project();
+    IGL_INLINE void init_snake_mesh();
+    bool running_game = false;
+    std::string* data_path;
+
+    bool pause_game = false;
+    bool finish_game = false;
+    bool end_game = false;
+    void* game;
+    
+    std::string cyl = "/ycylinder.obj";
+    std::string sph = "/sphere.obj";
+    int frames = 0;
+    int left_view;
+    int right_view;
+    igl::opengl::ViewerCore* second_camera;
+
+  
+
+
+
+    std::vector<ViewerPlugin*> plugins;
+    IGL_INLINE void setWindow(GLFWwindow* window);
+    IGL_INLINE void setRenderer(void* render);
+    IGL_INLINE igl::opengl::ViewerCore& core(unsigned core_id = 0);
+    IGL_INLINE const igl::opengl::ViewerCore& core(unsigned core_id = 0) const;
+    IGL_INLINE void snap_to_canonical_quaternion();
+ 
+    IGL_INLINE void shutdown_plugins();
+
+    void Viewer::updateDestPos1();
+
+
+
+
+
 
 	//IGL_INLINE void init_plugins();
     //IGL_INLINE void shutdown_plugins();
@@ -228,6 +338,7 @@ public:
     int next_data_id;
 	bool isPicked;
 	bool isActive;
+
 
     
 

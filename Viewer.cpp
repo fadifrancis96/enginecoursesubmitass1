@@ -46,6 +46,9 @@
 #include <igl\edge_flaps.h>
 #include <igl\vertex_triangle_adjacency.h>
 #include <igl/collapse_edge.h>
+#include "tutorial/sandBox/Game.h"
+#include <C:\Users\ASUS\EngineForAnimationCourse\igl\opengl\glfw\renderer.h>
+
 
 
 
@@ -768,38 +771,77 @@ namespace igl
 
             IGL_INLINE void Viewer::open_dialog_load_mesh()
             {
-              /*  std::string fname = igl::file_dialog_open();
+           
 
-                if (fname.length() == 0)
-                    return;
-
-                this->load_mesh_from_file(fname.c_str());*/
-
-
-
-
-                int savedIndx = selected_data_index;
-                load_mesh_from_file("C:/Users/ASUS/EngineForAnimationCourse/tutorial/data/zcylinder.obj");
-                data().add_points(Eigen::RowVector3d(0, 0, 0), Eigen::RowVector3d(0, 0, 1));
+                load_mesh_from_file("C:/Users/ASUS/EngineForAnimationCourse/tutorial/data/sphere.obj");
+                 data().MyTranslate(Eigen::Vector3d(0, 0, ( - 1.6)), false);
+                // data().MyTranslate(Eigen::Vector3d(0, 0, (-1.6)), true);
+                igl::AABB<Eigen::MatrixXd, 3>* tree = new igl::AABB<Eigen::MatrixXd, 3>();
                 data().show_overlay_depth = false;
                 data().show_overlay = true;
-                data().MyTranslate(Eigen::Vector3d(0, 0, (-1.6)), true);
+                tree->init(data().V, data().F);
                 data().set_visible(false, 1);
                 data().set_mesh(data().V, data().F);
                 data().set_visible(true, 2);
                 data().show_faces = 3;
                 data().set_face_based(true);
+              trees.push_back(tree);
+             tree_roots.push_back(tree);
+             last_box.push_back(&tree->m_box);
 
-                parents.push_back(data_list.size() - 2);
-                data().parentId = data_list.size() - 2;
+              data().original_V = new Eigen::MatrixXd(data().V);
+               data().original_F = new Eigen::MatrixXi(data().F);
 
-                data().SetCenter(Eigen::Vector3d(0, 0, 0.8));
-                data().show_texture = 3;
-                tipPos.push_back(Eigen::Vector4d(0, 0, 0, 1));
-                updateTipPos();
-                selected_data_index = savedIndx;
-                initLinkAxes();
-                linksNum++;
+             data().show_overlay_depth = false;
+              data().show_lines = false;
+              data().point_size = 1;
+             data().line_width = 1;
+
+                Eigen::RowVector3d red_color(1, 0, 0);
+
+                // this is the function that will draw box around our mesh 
+             draw_m_box(3, tree->m_box, red_color);
+
+               
+
+            parents.push_back(-1);
+           data().add_points(Eigen::RowVector3d(0, 0, 0), Eigen::RowVector3d(0, 0, 1));
+
+
+
+         
+               // data().add_points(Eigen::RowVector3d(0, 0, 0), Eigen::RowVector3d(0, 0, 1));
+               // data().show_overlay_depth = false;
+               // data().show_overlay = true;
+               // data().MyTranslate(Eigen::Vector3d(0, 0, (-1.6)), true);
+               // data().set_visible(false, 1);
+               // data().set_mesh(data().V, data().F);
+               // data().set_visible(true, 2);
+               // data().show_faces = 3;
+               // data().set_face_based(true);
+
+               // igl::AABB<Eigen::MatrixXd, 3>* tree = new igl::AABB<Eigen::MatrixXd, 3>();
+
+               // tree->init(data().V, data().F);
+
+               // trees.push_back(tree);
+               // tree_roots.push_back(tree);
+               // last_box.push_back(&tree->m_box);
+
+               //data().original_V = new Eigen::MatrixXd(data().V);
+               //data().original_F = new Eigen::MatrixXi(data().F);
+
+               //
+               // 
+
+               // data().SetCenter(Eigen::Vector3d(0, 0, 0.8));
+
+               // Eigen::RowVector3d red_color(1, 0, 0);
+               // draw_m_box(2, tree->m_box, red_color);
+               // data().show_texture = 3;
+               ////
+              
+            
                 printf("current links num is %d\n", linksNum);
 
 
@@ -865,11 +907,11 @@ namespace igl
             {
                 assert((index >= 0 && index < data_list.size()) && "index should be in bounds");
                 assert(data_list.size() >= 1);
-                if (data_list.size() == 1)
-                {
-                    // Cannot remove last mesh
-                    return false;
-                }
+                //if (data_list.size() == 1)
+                //{
+                //    // Cannot remove last mesh
+                //    return false;
+                //}
                 data_list[index].meshgl.free();
                 data_list.erase(data_list.begin() + index);
                 if (selected_data_index >= index && selected_data_index > 0)
@@ -894,7 +936,7 @@ namespace igl
             // ASSIGNMENT 1 - TASK 4
 
             IGL_INLINE bool Viewer::load_mesh_from_configuration(const std::string config, bool assignment2) {
-
+            
                 if (assignment2)
                     return true;
                 //init_obj_collision();
@@ -911,7 +953,7 @@ namespace igl
                     else {
                         while (getline(infile, mesh_path)) {
                             std::cout << "opening " << mesh_path << std::endl;
-                            this->load_mesh_from_file(mesh_path);
+                            this->load_mesh_from_file("C:/Users/ASUS/EngineForAnimationCourse/tutorial/data/cube.obj");
                             // if (enable_simplefication) this->init_simplefication_objs();
                         }
                         infile.close();
@@ -930,33 +972,41 @@ namespace igl
 
 
             IGL_INLINE void Viewer::start_collision_render() {
-                this->data_list[1].MyTranslate(Eigen::Vector3d(-0.005, 0, 0), true);
+                printf("data list size now is %d \n", data_list.size());
+                //FOR ON DATA LIST 
+                // CHECK COLLSSION BETWEEN THE ALWAYS THE FIRST AND THE ITH 
 
-                Eigen::Matrix4f t1 = MakeTransScale() * data_list[0].MakeTransScale();
-                auto a1 = t1.row(0);
-                auto a2 = t1.row(1);
-                auto a3 = t1.row(2);
-                Eigen::Vector3d A[3] =
-                { Eigen::Vector3d(a1(0),a1(1),a1(2)),
-                    Eigen::Vector3d(a2(0),a2(1),a2(2)),
-                    Eigen::Vector3d(a3(0),a3(1),a3(2)) };
+        
 
-                t1 = MakeTransScale() * data_list[1].MakeTransScale();
-                a1 = t1.row(0);
-                a2 = t1.row(1);
-                a3 = t1.row(2);
-                Eigen::Vector3d B[3] =
-                { Eigen::Vector3d(a1(0),a1(1),a1(2)),
-                    Eigen::Vector3d(a2(0),a2(1),a2(2)),
-                    Eigen::Vector3d(a3(0),a3(1),a3(2)) };
+                   
+                        this->data_list[1].MyTranslate(Eigen::Vector3d(-0.005, 0, 0), true);
+
+                        Eigen::Matrix4f t1 = MakeTransScale() * data_list[0].MakeTransScale();
+                        auto a1 = t1.row(0);
+                        auto a2 = t1.row(1);
+                        auto a3 = t1.row(2);
+                        Eigen::Vector3d A[3] =
+                        { Eigen::Vector3d(a1(0),a1(1),a1(2)),
+                            Eigen::Vector3d(a2(0),a2(1),a2(2)),
+                            Eigen::Vector3d(a3(0),a3(1),a3(2)) };
+
+                        t1 = MakeTransScale() * data_list[1].MakeTransScale();
+                        a1 = t1.row(0);
+                        a2 = t1.row(1);
+                        a3 = t1.row(2);
+                        Eigen::Vector3d B[3] =
+                        { Eigen::Vector3d(a1(0),a1(1),a1(2)),
+                            Eigen::Vector3d(a2(0),a2(1),a2(2)),
+                            Eigen::Vector3d(a3(0),a3(1),a3(2)) };
 
 
-                if (check_collision_occurence(this->trees.at(0), this->trees.at(1), A, B)) {
-                    this->stop_collision();
-                    this->trees.at(0) = this->tree_roots.at(0);
-                    this->trees.at(1) = this->tree_roots.at(1);
-                }
-
+                        if (check_collision_occurence(this->trees.at(0), this->trees.at(1), A, B)) {
+                            this->stop_collision();
+                            this->trees.at(0) = this->tree_roots.at(0);
+                            this->trees.at(1) = this->tree_roots.at(1);
+                        }
+                    
+                
             }
 
 
@@ -1216,89 +1266,88 @@ namespace igl
             /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             //////////////////////////////////////////// ASSIGNMENT 3 //////////////////////////////////////////////////////////////////////
+            IGL_INLINE void Viewer::init_ik_mesh()
 
-            IGL_INLINE void Viewer::init_ik_mesh() 
-
-                {
+            {
 
                 // first of all i want to load the sphere and save the data of it 
-               
-                    std::string item_name;
-                    std::ifstream nameFileout;
-                    doubleVariable = 0;
-               
-                    linksNum = 3;
-                    	
-                    load_mesh_from_file("C:/Users/ASUS/EngineForAnimationCourse/tutorial/data/sphere.obj");
-                    parents.push_back(-1);
+
+                std::string item_name;
+                std::ifstream nameFileout;
+                doubleVariable = 0;
+
+                linksNum = 3;
+
+                load_mesh_from_file("C:/Users/ASUS/EngineForAnimationCourse/tutorial/data/sphere.obj");
+                parents.push_back(-1);
+                data().add_points(Eigen::RowVector3d(0, 0, 0), Eigen::RowVector3d(0, 0, 1));
+                data().show_overlay_depth = false;
+                data().show_overlay = true;
+
+
+                data().MyTranslate(Eigen::Vector3d(5, 0, 0), true);
+
+
+                data().set_visible(false, 1);
+
+
+
+                data().set_face_based(true);
+                // data().initEuler();
+
+                 // here i want to initialize the accpesees 
+                initAxes();
+
+
+                // before i start loading the cylinder , i want to push the initialized tip pos 
+                tipPos.push_back(Eigen::Vector4d(0, 0, 0, 1));
+
+
+                // here is a loop that loads 3 cylinders , for each one i want to update its center 
+                // its parent cylindar and info 
+                for (int i = 0; i < linksNum; i++) {
+                    load_mesh_from_file("C:/Users/ASUS/EngineForAnimationCourse/tutorial/data/zcylinder.obj");
+
                     data().add_points(Eigen::RowVector3d(0, 0, 0), Eigen::RowVector3d(0, 0, 1));
                     data().show_overlay_depth = false;
                     data().show_overlay = true;
-                   
 
-                    data().MyTranslate(Eigen::Vector3d(5, 0, 0), true);
+                    if (i != 0) {
+                        data().MyTranslate(Eigen::Vector3d(0, 0, (-1.6)), true);
+                    }
 
 
                     data().set_visible(false, 1);
 
 
-                 
-                    data().set_face_based(true);
-                   // data().initEuler();
+                    initLinkAxes();
+                    Eigen::Vector3d center = data().GetCenter();
 
-                    // here i want to initialize the accpesees 
-                    initAxes();
+                    data().SetCenter(Eigen::Vector3d(0, 0, 0.8));
 
-
-                    // before i start loading the cylinder , i want to push the initialized tip pos 
-                    tipPos.push_back(Eigen::Vector4d(0, 0, 0, 1));
-
-
-                    // here is a loop that loads 3 cylinders , for each one i want to update its center 
-                    // its parent cylindar and info 
-                    for (int i = 0; i < linksNum; i++) {
-                        load_mesh_from_file("C:/Users/ASUS/EngineForAnimationCourse/tutorial/data/zcylinder.obj");
-
-                        data().add_points(Eigen::RowVector3d(0, 0, 0), Eigen::RowVector3d(0, 0, 1));
-                        data().show_overlay_depth = false;
-                        data().show_overlay = true;
-
-                        if (i != 0) {
-                            data().MyTranslate(Eigen::Vector3d(0, 0, (-1.6)), true);
-                        }
-
-
-                        data().set_visible(false, 1);
-
-
-                        initLinkAxes();
-                        Eigen::Vector3d center = data().GetCenter();
-                   
-                        data().SetCenter(Eigen::Vector3d(0, 0, 0.8));
-                      
-                        if (i != 0) {
-                            parents.push_back(data_list.size() - 2);
-                            data().parentId = data_list.size() - 2;
-                        }
-                        else {
-                            parents.push_back(-1);
-                            data().parentId = -1;
-                            Eigen::MatrixXd V_box(1, 3);
-                            V_box <<
-                                center.x(), center.y(), center.z();
-
-                            data().add_points(V_box, Eigen::RowVector3d(1, 0, 0));
-                        }
-                        
-
-                        tipPos.push_back(Eigen::Vector4d(0, 0, (i + 1) * 1.6, 1));
+                    if (i != 0) {
+                        parents.push_back(data_list.size() - 2);
+                        data().parentId = data_list.size() - 2;
                     }
-                   
-                    updateDestPos();
-                    updateTipPos();
+                    else {
+                        parents.push_back(-1);
+                        data().parentId = -1;
+                        Eigen::MatrixXd V_box(1, 3);
+                        V_box <<
+                            center.x(), center.y(), center.z();
 
+                        data().add_points(V_box, Eigen::RowVector3d(1, 0, 0));
+                    }
+
+
+                    tipPos.push_back(Eigen::Vector4d(0, 0, (i + 1) * 1.6, 1));
                 }
 
+                updateDestPos();
+                updateTipPos();
+
+            }
+            
 
 void Viewer::CCD() {
     double delta = 0.1;
@@ -1404,7 +1453,11 @@ void Viewer::Fabrik() {
         lambda = 1.6 / R;
         ftipPos[i + 1] = (1 - lambda) * ftipPos[i] + lambda * ftipPos[i + 1];
     }
-
+    /* 
+    now here that the new positions are really updated i want to actually MOVE 
+    THIS PART OF THE CODE IS SHARED WITH THE CCD ONE , BUT I WANTED TO PUT IT IN AN EXTERNAL FUNCTION 
+    
+    */
     updateLinksToTips(ftipPos);
 
     tipToDest = tipPos[linksNum] - destPos;
@@ -1436,7 +1489,9 @@ void Viewer::updateLinksToTips(std::vector<Eigen::Vector4d> newPos) {
             A = -1;
         }
         angle = acos(A);
+        // CALCULATE THE ROTATON VECTIR . 
         rotationVector = currVec.cross3(newVec);
+        // UPDATE THE DATA LIST . 
         data_list[i + 1].MyRotate(((CalcParentsTrans(i + 1) * data_list[i + 1].MakeTransd()).inverse() * rotationVector).head(3), angle / 10);
         updateTipPos();
     }
@@ -1450,6 +1505,7 @@ void Viewer::updateDestPos() {
     destPos = (data_list[0].MakeTransd() * Eigen::Vector4d(0, 0, 0, 1));
   
 }
+
 void Viewer::initAxes() {
 
     Eigen::MatrixXd V_box(6, 3);
@@ -1487,10 +1543,14 @@ void Viewer::fix_axis_rotation() {
         Eigen::Matrix3d rotation_mat = data_list[i].GetRotation();
         Eigen::Vector3d Eulerangl = rotation_mat.eulerAngles(2, 0, 2);// take the current rotation angle zxz(2,0,2)
         adegrad = Eulerangl[2];
-        data_list[i].MyRotate(zAx, -adegrad);// rotate around z ax, with the  minus the degree, that we rotate before, to fix axis
-        //now after zxz we rotate -z so now its zx....z(-z)=zx
+        // I WANT TO rotate around z ax, with the  minus the degree, that we rotate before, to fix axis.
+        //now after zxz we rotateD -z so now its zx....z(-z)=zx
         // so for next link we rotate with z angle to return zxz
-        if (i != data_list.size() - 1) { // if we are last link with no children link, so we finish , no rotate, to prevent error with no exist data
+        data_list[i].MyRotate(zAx, -adegrad);
+
+        // NOW I WOULD WANT TO CHECK IF IM A PARENT WITH NO CHILDREN - LETS SAY THE ROOT PARENT THEN I DONT WANT TO DO THE FIX (ROTATE) BECAUSE THAT WILL FIX ON NON AVALIBLE DATA
+      
+        if (i != data_list.size() - 1) { 
             data_list[i + 1].RotateInSystem(zAx, adegrad);
         }
     }
@@ -1533,7 +1593,7 @@ void Viewer::updateTipPos() {
     Eigen::Matrix3d rot = Eigen::Matrix3d().Identity();
 
 
-    Eigen::Vector4d O = data_list[1].MakeTransd() * center - Eigen::Vector4d(0, 0, 0.8, 0);
+    Eigen::Vector4d O = data_list[1].MakeTransd() * center - Eigen::Vector4d(0, 0, 0, 0);
     tipPos[0] = O;
     for (int i = 1; i < data_list.size(); i++) {
         rot = rot * data_list[i].GetRotation();
@@ -1572,9 +1632,119 @@ void Viewer::printTip() {
     }
 }
 
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////// FINAL PROJECT //////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+IGL_INLINE bool Viewer::check_snake_collision() {
+    printf("data list size now is %d \n", data_list.size());
+
+    printf("selected data index is   %d \n", selected_data_index);
+    if (level2) {
+       
+        return (check_index_collision(2));
+    }
+    else {
+        return (check_index_collision(0));
+    }
+}
+bool Viewer::check_index_collision(int i) {
+
+
+    Eigen::Matrix4f t1 = MakeTransScale() * data_list[i].MakeTransScale();
+    auto a1 = t1.row(0);
+    auto a2 = t1.row(1);
+    auto a3 = t1.row(2);
+    Eigen::Vector3d A[3] =
+    { Eigen::Vector3d(a1(0),a1(1),a1(2)),
+        Eigen::Vector3d(a2(0),a2(1),a2(2)),
+        Eigen::Vector3d(a3(0),a3(1),a3(2)) };
+
+    t1 = MakeTransScale() * data_list[selected_data_index].MakeTransScale();
+    a1 = t1.row(0);
+    a2 = t1.row(1);
+    a3 = t1.row(2);
+    Eigen::Vector3d B[3] =
+    { Eigen::Vector3d(a1(0),a1(1),a1(2)),
+        Eigen::Vector3d(a2(0),a2(1),a2(2)),
+        Eigen::Vector3d(a3(0),a3(1),a3(2)) };
+
+
+    if (check_collision_occurence(this->trees.at(i), this->trees.at(selected_data_index), A, B)) {
+        this->stop_collision();
+   /*     this->trees.at(0) = this->tree_roots.at(0);
+        this->trees.at(1) = this->tree_roots.at(1);*/
+        return true;
+    }
+
+    return false;
+
+}
+
+
+IGL_INLINE void Viewer::init_final_project() {
+    printf("im in init final project \n");
+
+
+    this->configFileLevel = "configuration.txt";
+
+    this->running_game = true;
+
+
+
+     this->game = new Game(this);
+
+     ((Game*)this->game)->init();
+
+    // at this point my game has a snake and now i want to start moving this snake 
+
+
+
+    printf("we are here now \n");
+}
+
+
+
+
+IGL_INLINE Eigen::Matrix4f Viewer::get_parent_link_T(int index) {
+   
+
+    Eigen::Matrix4f m = Eigen::Matrix4f::Identity();
+        if (index <= this->last_link_index && index >= this->root_link_index) {
            
+            for (int i = this->root_link_index; i < index; i++) {
+               
+                m = m * this->data_list[i].MakeTrans1();
+              
+            }
+        }
+    
 
+    return m;
+}
+IGL_INLINE Eigen::Matrix4f Viewer::get_parent_link_Rot(int index) {
+    Eigen::Matrix4f m = Eigen::Matrix4f::Identity();
 
+    {
+        for (int i = this->root_link_index; i < index && i < this->last_link_index; i++) {
+            m = m * this->data_list[i].GetRotationTrans1();
+        }
+
+        return m;
+    }
+}
 
             Eigen::Matrix4d Viewer::CalcParentsTrans(int indx)
             {

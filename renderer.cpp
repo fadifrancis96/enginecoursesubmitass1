@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <igl/unproject_onto_mesh.h>
 #include "igl/look_at.h"
+#include <igl/snap_to_canonical_view_quat.h>
 //#include <Eigen/Dense>
 
 Renderer::Renderer() : selected_core_index(0),
@@ -143,6 +144,17 @@ void Renderer::UpdatePosition(double xpos, double ypos)
 	xold = xpos;
 	yold = ypos;
 }
+IGL_INLINE void Renderer::StartGame(igl::opengl::glfw::Viewer* viewer) {
+	if (scn->running_game) {
+		core().viewport = Eigen::Vector4f(0, 0, 640, 800);
+		scn->left_view = core_list[0].id;
+		scn->right_view = append_core(Eigen::Vector4f(640, 0, 640, 800));
+		viewer->second_camera = &core(2);
+		scn->MyTranslate(Eigen::Vector3d(0.0, -10.0, -30.0), true);
+
+	}
+	core().align_camera_center(scn->data().V, scn->data().F);
+}
 
 void Renderer::MouseProcessing(int button)
 {
@@ -152,6 +164,7 @@ void Renderer::MouseProcessing(int button)
 		printf("object is picked\n");
 		if (button == 1)
 		{
+			printf("im here 0 \n");
 			float near = core().camera_dnear, far = core().camera_dfar, angle = core().camera_view_angle;
 			//float z = far + depth * (near - far);
 			
@@ -165,7 +178,7 @@ void Renderer::MouseProcessing(int button)
 			scn->data().TranslateInSystem(scn->GetRotation(), Eigen::Vector3d(xToMove, 0, 0));
 			scn->data().TranslateInSystem(scn->GetRotation(), Eigen::Vector3d(0, yToMove, 0));
 
-
+			printf("im here \n");
 
 			scn->WhenTranslate();
 		}
@@ -177,10 +190,10 @@ void Renderer::MouseProcessing(int button)
 			/// </summary>
 			/// <param name="button"></param>
 			
-
+			printf("im here2 \n");
 			scn->data().RotateInSystem(Eigen::Vector3d(1, 0, 0), yrel / 100.0);
 			scn->data().RotateInSystem(Eigen::Vector3d(0, 1, 0), xrel / 100.0);
-
+			printf("im here3 \n");
 			//scn->data().RotateInSystem(scn->data().MakeTransd().block<3,3>(0,0) );
 		    //scn->data().RotateInSystem(scn->data().MakeTransd().block<3, 3>(0, 0));
 
@@ -374,6 +387,12 @@ IGL_INLINE void Renderer::resize(GLFWwindow* window,int w, int h)
 		selected_core_index = core_list.size() - 1;
 		return core_list.back().id;
 	}
+	IGL_INLINE void Renderer::snap_to_canonical_quaternion()
+	{
+		Eigen::Quaternionf snapq = this->core().trackball_angle;
+		igl::snap_to_canonical_view_quat(snapq, 1.0f, this->core().trackball_angle);
+	}
+
 
 	//IGL_INLINE void Viewer::select_hovered_core()
 	//{

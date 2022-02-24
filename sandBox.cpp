@@ -16,13 +16,21 @@ void SandBox::Init(const std::string &config)
 {
 	bool assignment2 = false ; 
 	bool assignment3 = false;
-
+	bool finalproject = true; 
+	linksNum = 3;
 	// choose please what assignment is on  
 	if (assignment3) {
-
+		Xdir = 0;
+		Ydir = 0;
 		Viewer::init_ik_mesh();
 		printf("fadi \n");
 		
+	}
+	if (finalproject) {
+
+		Viewer::init_final_project();
+
+
 	}
 
 	else {
@@ -46,12 +54,8 @@ void SandBox::Init(const std::string &config)
 			{
 
 				std::cout << "im here trying to open  \n" << item_name << std::endl;
-
+				
 				this->load_mesh_from_file(mesh_path);
-
-				//TODO
-
-
 				double meshtmp = mesh - 0.5;
 				double meshtmp1 = meshtmp * 0.5;
 
@@ -75,21 +79,12 @@ void SandBox::Init(const std::string &config)
 
 				Eigen::RowVector3d red_color(1, 0, 0);
 
-				// this is the function that will draw box around our mesh 
 				Viewer::draw_m_box(this->selected_data_index, tree->m_box, red_color);
 
 				mesh++;
 
 
-				// here should 2 objects already be loaded 
-
-			//	Viewer::collission_init(item_name);
-				//getline(infile, mesh_path);
-			//	this->load_mesh_from_file(item_name);
-				//Viewer::load_mesh_from_configuration(item_name , true );
-
-
-				//Viewer::init_objs_simpelified();
+		
 
 
 
@@ -97,17 +92,13 @@ void SandBox::Init(const std::string &config)
 
 				parents.push_back(-1);
 				data().add_points(Eigen::RowVector3d(0, 0, 0), Eigen::RowVector3d(0, 0, 1));
-				//data().show_overlay_depth = false;
-				//data().point_size = 10;
-				//data().line_width = 2;
-				//data().set_visible(false, 1);
-
+			
 
 			}
 			nameFileout.close();
 		}
 
-		MyTranslate(Eigen::Vector3d(0, 0, -1), true);
+		//MyTranslate(Eigen::Vector3d(0, 0, -1), true);
 
 		data().set_colors(Eigen::RowVector3d(0.9, 0.1, 0.1));
 	}

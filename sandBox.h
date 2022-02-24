@@ -9,6 +9,11 @@ public:
 	~SandBox();
 	void Init(const std::string& config);
 	double doubleVariable;
+
+
+
+	double Xdir;
+	double Ydir;
 private:
 	// Prepare array-based edge data structures and priority queue
 	

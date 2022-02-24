@@ -46,6 +46,9 @@ public:
 	void* callback_key_up_data;
 
 
+
+	IGL_INLINE void Renderer::snap_to_canonical_quaternion();
+
 	////////////////////////////
 	// Multi-viewport methods //
 	////////////////////////////
@@ -104,6 +107,7 @@ public:
 	void TranslateCamera(Eigen::Vector3f amt);
 	void RotateCamera(float amtX, float amtY);
 	inline bool IsPicked() { return scn->isPicked; }
+	IGL_INLINE void Renderer::StartGame(igl::opengl::glfw::Viewer* viewer);
 	
 private:
 	// Stores all the viewing options
